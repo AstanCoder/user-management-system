@@ -1,0 +1,13 @@
+.gradle/
+.cursor/
+build/
+buildSrc/
+backend/build/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+.env
+*.iml
+.idea/
+.DS_Store
+openspec/
