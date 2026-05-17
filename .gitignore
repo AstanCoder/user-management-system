@@ -13,3 +13,9 @@ frontend/out/
 openspec/
 
 
+**/build/
+**/target/
+**/dist/
+**/out/
+**/buildSrc/
+**/bin/
