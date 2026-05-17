@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-activities
+      author: nexus-crm-expansion
+      changes:
+        - createTable:
+            tableName: activities
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author_user_id
+                  type: uuid
+              - column:
+                  name: activity_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: occurred_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: activities
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_activities_contact
+            onDelete: CASCADE
+      rollback:
+        - dropTable:
+            tableName: activities

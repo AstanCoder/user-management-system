@@ -1,17 +1,18 @@
 package com.example.contact.application.port.in;
 
-import com.example.contact.application.command.ContactResult;
-import java.util.List;
+import com.example.contact.application.command.ContactPageResult;
+import com.example.contact.application.command.ContactSearchQuery;
 
 /**
- * Inbound port for listing all contacts.
+ * Inbound port for listing contacts with pagination.
  */
 public interface ListContactsUseCase {
 
     /**
-     * Returns all contacts ordered by creation time descending.
+     * Returns a paginated contact list.
      *
-     * @return contact results
+     * @param query search query
+     * @return page result
      */
-    List<ContactResult> execute();
+    ContactPageResult execute(ContactSearchQuery query);
 }

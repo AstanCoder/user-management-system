@@ -1,0 +1,119 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-users-and-roles
+      author: nexus-crm-expansion
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: CREATE UNIQUE INDEX ux_users_email ON users (LOWER(email));
+        - addForeignKeyConstraint:
+            baseTableName: contacts
+            baseColumnNames: assigned_to_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_contacts_assigned_to_user
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: notes
+            baseColumnNames: author_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_notes_author_user
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: activities
+            baseColumnNames: author_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_activities_author_user
+            onDelete: SET NULL
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 00000000-0000-0000-0000-000000000001
+              - column:
+                  name: email
+                  value: admin@nexuscrm.com
+              - column:
+                  name: password_hash
+                  value: $2y$10$RZqepUu2svbE5RvppWSxherkbnWASxWfuQPlLTCq.ANVNYui1H18q
+              - column:
+                  name: first_name
+                  value: System
+              - column:
+                  name: last_name
+                  value: Admin
+              - column:
+                  name: role
+                  value: ADMIN
+              - column:
+                  name: status
+                  value: ACTIVE
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: activities
+            constraintName: fk_activities_author_user
+        - dropForeignKeyConstraint:
+            baseTableName: notes
+            constraintName: fk_notes_author_user
+        - dropForeignKeyConstraint:
+            baseTableName: contacts
+            constraintName: fk_contacts_assigned_to_user
+        - dropTable:
+            tableName: users

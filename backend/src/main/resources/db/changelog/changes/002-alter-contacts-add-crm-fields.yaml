@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-alter-contacts-add-crm-fields
+      author: nexus-crm-expansion
+      changes:
+        - addColumn:
+            tableName: contacts
+            columns:
+              - column:
+                  name: company
+                  type: varchar(200)
+              - column:
+                  name: job_title
+                  type: varchar(150)
+              - column:
+                  name: street
+                  type: varchar(255)
+              - column:
+                  name: city
+                  type: varchar(100)
+              - column:
+                  name: postal_code
+                  type: varchar(20)
+              - column:
+                  name: country
+                  type: varchar(100)
+              - column:
+                  name: avatar_url
+                  type: varchar(500)
+              - column:
+                  name: status
+                  type: varchar(30)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assigned_to_user_id
+                  type: uuid
+      rollback:
+        - dropColumn:
+            tableName: contacts
+            columnName: company
+        - dropColumn:
+            tableName: contacts
+            columnName: job_title
+        - dropColumn:
+            tableName: contacts
+            columnName: street
+        - dropColumn:
+            tableName: contacts
+            columnName: city
+        - dropColumn:
+            tableName: contacts
+            columnName: postal_code
+        - dropColumn:
+            tableName: contacts
+            columnName: country
+        - dropColumn:
+            tableName: contacts
+            columnName: avatar_url
+        - dropColumn:
+            tableName: contacts
+            columnName: status
+        - dropColumn:
+            tableName: contacts
+            columnName: assigned_to_user_id

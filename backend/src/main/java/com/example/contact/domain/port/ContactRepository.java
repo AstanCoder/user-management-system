@@ -1,5 +1,6 @@
 package com.example.contact.domain.port;
 
+import com.example.contact.domain.query.ContactSearchCriteria;
 import com.example.contact.domain.model.Contact;
 import com.example.contact.domain.valueobject.ContactId;
 import com.example.contact.domain.valueobject.Email;
@@ -17,6 +18,22 @@ public interface ContactRepository {
      * @return contact list
      */
     List<Contact> findAll();
+
+    /**
+     * Searches contacts with pagination.
+     *
+     * @param query search query
+     * @return matching contacts
+     */
+    List<Contact> search(ContactSearchCriteria criteria);
+
+    /**
+     * Counts contacts matching search.
+     *
+     * @param criteria search criteria
+     * @return total count
+     */
+    long countSearch(ContactSearchCriteria criteria);
 
     /**
      * Finds a contact by id.

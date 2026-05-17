@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-tags-and-contact-tags
+      author: nexus-crm-expansion
+      changes:
+        - createTable:
+            tableName: tags
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: tags
+            columnNames: name
+            constraintName: ux_tags_name
+        - createTable:
+            tableName: contact_tags
+            columns:
+              - column:
+                  name: contact_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tag_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: contact_tags
+            columnNames: contact_id, tag_id
+            constraintName: pk_contact_tags
+        - addForeignKeyConstraint:
+            baseTableName: contact_tags
+            baseColumnNames: contact_id
+            referencedTableName: contacts
+            referencedColumnNames: id
+            constraintName: fk_contact_tags_contact
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: contact_tags
+            baseColumnNames: tag_id
+            referencedTableName: tags
+            referencedColumnNames: id
+            constraintName: fk_contact_tags_tag
+            onDelete: CASCADE
+      rollback:
+        - dropTable:
+            tableName: contact_tags
+        - dropTable:
+            tableName: tags

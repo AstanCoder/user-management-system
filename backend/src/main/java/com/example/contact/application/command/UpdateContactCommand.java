@@ -1,6 +1,8 @@
 package com.example.contact.application.command;
 
+import com.example.contact.domain.model.ContactStatus;
 import com.example.contact.domain.valueobject.ContactId;
+import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
 
@@ -16,4 +18,12 @@ public class UpdateContactCommand {
     String lastName;
     String email;
     String phone;
+    String company;
+    String jobTitle;
+    String street;
+    String city;
+    String postalCode;
+    String country;
+    ContactStatus status;
+    UUID assignedToUserId;
 }
