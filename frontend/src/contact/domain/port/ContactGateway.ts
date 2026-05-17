@@ -1,35 +1,24 @@
+import { CreateContactPayload } from '../command/CreateContactPayload';
+import { UpdateContactPayload } from '../command/UpdateContactPayload';
 import { Contact } from '../model/Contact';
 import { ContactId } from '../valueobject/ContactId';
-import { CreateContactCommand } from '../../application/command/CreateContactCommand';
-import { UpdateContactCommand } from '../../application/command/UpdateContactCommand';
+
+export interface LogActivityPayload {
+  activityType: string;
+  description?: string | null;
+  occurredAt: string;
+}
 
 /**
  * Outbound port for contact HTTP persistence operations.
  */
 export interface ContactGateway {
-  /**
-   * Lists all contacts from the API.
-   * @returns domain contacts
-   */
   list(): Promise<Contact[]>;
-
-  /**
-   * Creates a contact via the API.
-   * @param command - create command
-   * @returns created contact
-   */
-  create(command: CreateContactCommand): Promise<Contact>;
-
-  /**
-   * Updates a contact via the API.
-   * @param command - update command
-   * @returns updated contact
-   */
-  update(command: UpdateContactCommand): Promise<Contact>;
-
-  /**
-   * Deletes a contact by id.
-   * @param id - contact id
-   */
+  create(command: CreateContactPayload): Promise<Contact>;
+  update(command: UpdateContactPayload): Promise<Contact>;
   delete(id: ContactId): Promise<void>;
+  addNote(contactId: string, body: string): Promise<void>;
+  addActivity(contactId: string, payload: LogActivityPayload): Promise<void>;
+  assignTags(contactId: string, tagNames: string[]): Promise<void>;
+  uploadAvatar(contactId: string, file: File): Promise<string>;
 }

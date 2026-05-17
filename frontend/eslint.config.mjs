@@ -16,14 +16,8 @@ const eslintConfig = [
         {
           zones: [
             {
-              target: './src/contact/domain',
-              from: './src',
-              except: ['./contact/domain'],
-              message: 'Domain layer must not import React, Next.js, or fetch.',
-            },
-            {
-              target: './src/contact/domain',
-              from: ['react', 'next', 'next/*'],
+              target: './src/**/domain',
+              from: ['react', 'next', 'next/**'],
               message: 'Domain layer must not depend on UI frameworks.',
             },
           ],

@@ -19,6 +19,6 @@ export class CreateContactService implements CreateContactUseCase {
     Email.create(command.email);
     PhoneNumber.createOptional(command.phone);
     const contact = await this.gateway.create(command);
-    return ContactViewModelMapper.toViewModel(contact);
+    return ContactViewModelMapper.fromDomain(contact);
   }
 }

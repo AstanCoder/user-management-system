@@ -10,23 +10,35 @@ import com.example.contact.application.port.in.DeleteContactUseCase;
 import com.example.contact.application.port.in.GetContactUseCase;
 import com.example.contact.application.port.in.ListContactsUseCase;
 import com.example.contact.application.port.in.UpdateContactUseCase;
+import com.example.contact.application.port.in.UploadAvatarUseCase;
+import com.example.shared.test.WebMvcTestSecurityConfig;
 import com.example.contact.domain.exception.DuplicateEmailException;
 import com.example.contact.domain.valueobject.Email;
 import com.example.contact.interfaces.rest.exception.ContactExceptionHandler;
 import com.example.contact.interfaces.rest.mapper.ContactRestMapperImpl;
 import com.example.contact.shared.mapper.DomainTypeMapper;
+import com.example.identity.infrastructure.config.SecurityConfig;
+import com.example.identity.infrastructure.security.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(ContactController.class)
-@Import({ContactExceptionHandler.class, ContactRestMapperImpl.class, DomainTypeMapper.class})
+@WebMvcTest(
+        controllers = ContactController.class,
+        excludeFilters =
+                @ComponentScan.Filter(
+                        type = FilterType.ASSIGNABLE_TYPE,
+                        classes = {JwtAuthenticationFilter.class, SecurityConfig.class}))
+@Import({ContactExceptionHandler.class, ContactRestMapperImpl.class, DomainTypeMapper.class, WebMvcTestSecurityConfig.class})
 class ContactControllerDuplicateTest {
 
     @Autowired
@@ -50,7 +62,11 @@ class ContactControllerDuplicateTest {
     @MockBean
     private DeleteContactUseCase deleteContactUseCase;
 
+    @MockBean
+    private UploadAvatarUseCase uploadAvatarUseCase;
+
     @Test
+    @WithMockUser(roles = "EDITOR")
     void create_duplicateEmail_returns409() throws Exception {
         when(createContactUseCase.execute(any()))
                 .thenThrow(new DuplicateEmailException(Email.create("dup@example.com")));

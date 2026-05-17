@@ -57,6 +57,16 @@ public class DomainTypeMapper {
     return value == null ? null : PhoneNumber.fromStored(value);
   }
 
+  @Named("stringToContactStatus")
+  public ContactStatus stringToContactStatus(String value) {
+    return value == null ? null : ContactStatus.valueOf(value);
+  }
+
+  @Named("stringToUuid")
+  public UUID stringToUuid(String value) {
+    return value == null || value.isBlank() ? null : UUID.fromString(value);
+  }
+
   public Contact toContact(ContactJpaEntity entity) {
     Address address =
         Address.fromStored(entity.getStreet(), entity.getCity(), entity.getPostalCode(), entity.getCountry());

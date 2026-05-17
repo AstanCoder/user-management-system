@@ -38,7 +38,7 @@ public final class Contact {
             Address address,
             String avatarUrl,
             ContactStatus status,
-            UserId assignedToUserId,
+            UUID assignedToUserId,
             Instant createdAt,
             Instant updatedAt) {
         this.id = id;
@@ -128,7 +128,7 @@ public final class Contact {
             Address address,
             String avatarUrl,
             ContactStatus status,
-            UserId assignedToUserId,
+            UUID assignedToUserId,
             Instant createdAt,
             Instant updatedAt) {
         return new Contact(

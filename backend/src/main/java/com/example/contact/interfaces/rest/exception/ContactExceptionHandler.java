@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * Maps domain and validation exceptions to HTTP error responses documented in OpenAPI.
  */
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.example.contact.interfaces.rest")
 public class ContactExceptionHandler {
 
     /**

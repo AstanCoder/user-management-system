@@ -19,6 +19,6 @@ export class UpdateContactService implements UpdateContactUseCase {
     Email.create(command.email);
     PhoneNumber.createOptional(command.phone);
     const contact = await this.gateway.update(command);
-    return ContactViewModelMapper.toViewModel(contact);
+    return ContactViewModelMapper.fromDomain(contact);
   }
 }

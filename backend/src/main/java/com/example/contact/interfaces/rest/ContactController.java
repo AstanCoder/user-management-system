@@ -16,7 +16,6 @@ import com.example.contact.interfaces.rest.dto.CreateContactRequest;
 import com.example.contact.interfaces.rest.dto.UpdateContactRequest;
 import com.example.contact.interfaces.rest.mapper.ContactRestMapper;
 import com.example.contact.interfaces.rest.sanitizer.ContactRequestSanitizer;
-import com.example.identity.interfaces.rest.SecurityContextAccessor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

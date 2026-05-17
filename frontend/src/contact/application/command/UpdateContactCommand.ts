@@ -1,12 +1,3 @@
-import { ContactId } from '../../domain/valueobject/ContactId';
+import { UpdateContactPayload } from '../../domain/command/UpdateContactPayload';
 
-/**
- * Application command to update a contact.
- */
-export interface UpdateContactCommand {
-  id: ContactId;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string | null;
-}
+export type UpdateContactCommand = UpdateContactPayload;

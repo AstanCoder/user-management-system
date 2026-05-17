@@ -12,33 +12,37 @@ public final class ContactRequestSanitizer {
 
     private ContactRequestSanitizer() {}
 
-    /**
-     * Returns a sanitized copy of a create request.
-     *
-     * @param request original request
-     * @return sanitized request
-     */
     public static CreateContactRequest sanitize(CreateContactRequest request) {
         return CreateContactRequest.builder()
                 .firstName(sanitizeName(request.getFirstName()))
                 .lastName(sanitizeName(request.getLastName()))
                 .email(sanitizeEmail(request.getEmail()))
                 .phone(sanitizePhone(request.getPhone()))
+                .company(trim(request.getCompany()))
+                .jobTitle(trim(request.getJobTitle()))
+                .street(trim(request.getStreet()))
+                .city(trim(request.getCity()))
+                .postalCode(trim(request.getPostalCode()))
+                .country(trim(request.getCountry()))
+                .status(request.getStatus())
+                .assignedToUserId(trim(request.getAssignedToUserId()))
                 .build();
     }
 
-    /**
-     * Returns a sanitized copy of an update request.
-     *
-     * @param request original request
-     * @return sanitized request
-     */
     public static UpdateContactRequest sanitize(UpdateContactRequest request) {
         return UpdateContactRequest.builder()
                 .firstName(sanitizeName(request.getFirstName()))
                 .lastName(sanitizeName(request.getLastName()))
                 .email(sanitizeEmail(request.getEmail()))
                 .phone(sanitizePhone(request.getPhone()))
+                .company(trim(request.getCompany()))
+                .jobTitle(trim(request.getJobTitle()))
+                .street(trim(request.getStreet()))
+                .city(trim(request.getCity()))
+                .postalCode(trim(request.getPostalCode()))
+                .country(trim(request.getCountry()))
+                .status(request.getStatus())
+                .assignedToUserId(trim(request.getAssignedToUserId()))
                 .build();
     }
 
@@ -61,5 +65,12 @@ public final class ContactRequestSanitizer {
             return null;
         }
         return value.trim().replaceAll("[\\s-]", "");
+    }
+
+    private static String trim(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

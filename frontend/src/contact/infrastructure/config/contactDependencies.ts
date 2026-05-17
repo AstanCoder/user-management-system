@@ -12,6 +12,7 @@ import { FetchContactGateway } from '../http/FetchContactGateway';
  * Composition root wiring gateway and use cases for the contact bounded context.
  */
 export interface ContactDependencies {
+  contactGateway: FetchContactGateway;
   listContactsUseCase: ListContactsUseCase;
   createContactUseCase: CreateContactUseCase;
   updateContactUseCase: UpdateContactUseCase;
@@ -26,6 +27,7 @@ export interface ContactDependencies {
 export function createContactDependencies(apiBaseUrl: string): ContactDependencies {
   const gateway = new FetchContactGateway(apiBaseUrl);
   return {
+    contactGateway: gateway,
     listContactsUseCase: new ListContactsService(gateway),
     createContactUseCase: new CreateContactService(gateway),
     updateContactUseCase: new UpdateContactService(gateway),

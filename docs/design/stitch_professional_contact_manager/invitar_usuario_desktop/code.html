@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Invite User - Nexus CRM</title>
+<script type='text/javascript' nonce='f6I90zajH9k0wdnyA/QAjA==' src='https://contribution.usercontent.google.com/72bHk_-RH1G8cMEZOLa9MOPiNyjagerKcztnNNyUxSSuSdqezayOMlgtFUcGlr_rooBdcPNsQ4duWEk-lVYpD-BpOtpTqDrBicWHfjqBJFqzxOUAsbXn4QQD5DhyNU97taXCugiA1kDIAE6Xe0EtTOQGUnMq4MN4HlrgjGTHxZC-UVYvF7FSr2Fd-LIEE1geDjdTUatgDrd_JghtQ9VnRTW01Kk1mLEmR8Lw8R3FGJjNq90fLjc7IWrXfy2rk4dEmSDPTZcUlgYe02-9M38YX7QrBk8Z5KqtGHjEiWtt4aw0-AEPmNzivYipbj_8oFBDCiBxp-I0bzGPAKr8GOEfglGdfdhFI78NnYb6vMSwTRriEuGL5SPbt7icL-Iakx_6q-e45zPWcg0AiXow00YEV-6MISpqgbjbs_uCItW4TvMYUmenOHDdhBbkc5dLCVaLImsCebyc8QXbfhRS_W_CvUo8jKkBBy5T_3bDw8Gr-HF8KW_2p5M4b7IIQfv5KvM-nGDQkyLGrmFIc6WvjEWCH0CbyZRI-bbXOiR7ZmtX_wV9fkt9XcDuCEXmWdeYlP8xU-j4J2fNz0VCICfqaqeX9VjAQEsOuH2AB7LTiMM-ntK5V1qVRr_yVOx_iCBwBd4nMe5vnqYVjOjOexKaLM5DksV4eGjDfj46jEyRev2Uk-87fsgG1a1zNzwbXXfDKRv942RnnkyOXAdEXwDXVqTbEMs2IhvuGUSahFeEoFSMxpYexmQd_sxxWsVAXl5SSBfuaZTqCtGh64hVZvFch1kmfoit7imZH4CxhgZ2SvYS'></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#001225",
+                        "on-primary-container": "#828da7",
+                        "outline": "#75777d",
+                        "surface-tint": "#545e76",
+                        "inverse-on-surface": "#f0f1ed",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#d1e4ff",
+                        "surface-bright": "#f9faf5",
+                        "on-tertiary-container": "#798fab",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d1e4ff",
+                        "on-tertiary-fixed-variant": "#334861",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#c2dcff",
+                        "surface-container-high": "#e8e8e4",
+                        "inverse-primary": "#bbc6e2",
+                        "background": "#f9faf5",
+                        "surface-variant": "#e2e3df",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#001d36",
+                        "secondary-fixed-dim": "#afc9ea",
+                        "tertiary-container": "#0f273f",
+                        "on-background": "#1a1c1a",
+                        "surface-dim": "#d9dad6",
+                        "surface-container": "#edeeea",
+                        "on-surface-variant": "#45474d",
+                        "surface": "#f9faf5",
+                        "on-primary-fixed": "#101b30",
+                        "on-surface": "#1a1c1a",
+                        "on-secondary-fixed-variant": "#2f4865",
+                        "on-primary": "#ffffff",
+                        "secondary": "#47607e",
+                        "surface-container-highest": "#e2e3df",
+                        "tertiary-fixed-dim": "#b2c8e7",
+                        "primary-fixed-dim": "#bbc6e2",
+                        "primary-container": "#1b263b",
+                        "primary": "#051125",
+                        "outline-variant": "#c5c6cd",
+                        "surface-container-low": "#f3f4f0",
+                        "on-primary-fixed-variant": "#3c475d",
+                        "primary-fixed": "#d7e2ff",
+                        "on-tertiary-fixed": "#031d34",
+                        "on-secondary-container": "#48617e",
+                        "inverse-surface": "#2f312e",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "xs": "4px",
+                        "base": "4px",
+                        "md": "16px",
+                        "max-width": "1280px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "margin-mobile": "16px",
+                        "xl": "32px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9faf5;
+            color: #1a1c1a;
+        }
+    </style>
+</head>
+<body class="bg-background flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop py-base bg-surface border-b border-outline-variant max-w-max-width mx-auto">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="contacts" data-weight="fill" style="font-variation-settings: &#39;FILL&#39; 1;">contacts</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Nexus CRM</span>
+</div>
+<nav class="hidden md:flex gap-lg">
+<a class="text-on-surface-variant font-medium hover:bg-surface-container-low transition-colors px-sm py-xs rounded" href="#">Dashboard</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-container-low transition-colors px-sm py-xs rounded" href="#">Directory</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 px-sm py-xs" href="#">Admin</a>
+</nav>
+<div class="flex items-center">
+<span class="font-label-md text-label-md text-on-surface-variant mr-sm">User Profile</span>
+<div class="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center font-label-md text-label-md">
+                AR
+            </div>
+</div>
+</header>
+<div class="flex flex-1 pt-[72px] w-full max-w-max-width mx-auto">
+<!-- NavigationDrawer -->
+<aside class="hidden lg:flex flex-col h-full border-r border-outline-variant w-64 pt-xl bg-surface">
+<div class="px-lg pb-lg mb-lg border-b border-outline-variant">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center font-label-md text-label-md">AR</div>
+<div>
+<div class="font-label-md text-label-md font-semibold text-primary">Alex Rivera</div>
+<div class="font-body-md text-body-md text-on-surface-variant">Global Admin</div>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-sm">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant font-medium hover:bg-surface-container-low rounded-r-full mr-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="space_dashboard">space_dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant font-medium hover:bg-surface-container-low rounded-r-full mr-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="contact_page">contact_page</span>
+<span class="font-label-md text-label-md">Contacts</span>
+</a>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant font-medium hover:bg-surface-container-low rounded-r-full mr-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant font-medium hover:bg-surface-container-low rounded-r-full mr-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-lg py-sm bg-secondary-container text-on-secondary-container font-semibold rounded-r-full mr-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="security" data-weight="fill" style="font-variation-settings: &#39;FILL&#39; 1;">security</span>
+<span class="font-label-md text-label-md">Admin Panel</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-margin-desktop bg-background">
+<div class="mb-xl">
+<div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+<a class="hover:text-primary transition-colors font-body-md text-body-md" href="#">Admin Panel</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<a class="hover:text-primary transition-colors font-body-md text-body-md" href="#">Users</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="font-body-md text-body-md text-primary font-medium">Invite User</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-primary mb-xs">Invite User</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Send an invitation to join the Nexus CRM platform.</p>
+</div>
+<!-- Focused Form Area -->
+<div class="max-w-2xl bg-surface-container-lowest border border-surface-variant rounded-xl p-lg md:p-xl shadow-sm">
+<form>
+<div class="mb-lg">
+<label class="block font-label-md text-label-md text-primary mb-xs" for="email">Email Address *</label>
+<input class="w-full px-md py-sm border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/10 bg-transparent" id="email" name="email" placeholder="e.g., jane.doe@company.com" required="" type="email"/>
+<p class="mt-xs font-body-md text-[12px] text-on-surface-variant">An invitation link will be sent to this email.</p>
+</div>
+<div class="mb-xl">
+<label class="block font-label-md text-label-md text-primary mb-sm">Assign Role *</label>
+<div class="space-y-sm">
+<label class="flex items-start p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors relative">
+<input class="mt-xs text-primary focus:ring-primary border-outline-variant" name="role" type="radio" value="admin"/>
+<div class="ml-md">
+<span class="block font-label-md text-label-md text-primary font-semibold mb-[2px]">Admin</span>
+<span class="block font-body-md text-body-md text-on-surface-variant">Full access to all settings, user management, and directory editing.</span>
+</div>
+</label>
+<label class="flex items-start p-md border border-secondary bg-secondary/5 rounded-lg cursor-pointer transition-colors relative">
+<input checked="" class="mt-xs text-primary focus:ring-primary border-outline-variant" name="role" type="radio" value="editor"/>
+<div class="ml-md">
+<span class="block font-label-md text-label-md text-primary font-semibold mb-[2px]">Editor</span>
+<span class="block font-body-md text-body-md text-on-surface-variant">Can create, edit, and organize contacts, but cannot manage users.</span>
+</div>
+</label>
+<label class="flex items-start p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors relative">
+<input class="mt-xs text-primary focus:ring-primary border-outline-variant" name="role" type="radio" value="viewer"/>
+<div class="ml-md">
+<span class="block font-label-md text-label-md text-primary font-semibold mb-[2px]">Viewer</span>
+<span class="block font-body-md text-body-md text-on-surface-variant">Read-only access to the directory and analytics.</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex items-center justify-end gap-md pt-lg border-t border-outline-variant">
+<button class="px-lg py-sm font-label-md text-label-md font-semibold text-primary bg-surface-variant hover:bg-outline-variant transition-colors rounded-lg" type="button">Cancel</button>
+<button class="px-lg py-sm font-label-md text-label-md font-semibold text-white bg-primary-container hover:bg-tertiary transition-colors rounded-lg flex items-center gap-xs" type="submit">
+<span class="material-symbols-outlined text-[18px]" data-icon="send">send</span>
+                            Send Invitation
+                        </button>
+</div>
+</form>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm md:hidden bg-surface rounded-t-xl border-t border-outline-variant shadow-sm">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm-mobile text-label-sm-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-sm-mobile text-label-sm-mobile">Directory</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 hover:bg-surface-container active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings" data-weight="fill" style="font-variation-settings: &#39;FILL&#39; 1;">admin_panel_settings</span>
+<span class="font-label-sm-mobile text-label-sm-mobile">Admin</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm-mobile text-label-sm-mobile">Profile</span>
+</a>
+</nav>
+<!-- Footer -->
+<footer class="w-full py-lg px-margin-desktop flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto bg-surface-container-lowest border-t border-outline-variant mt-auto">
+<div class="font-label-md text-label-md font-bold text-primary mb-sm md:mb-0">
+            © 2024 Nexus Contact Management. Data-driven clarity.
+        </div>
+<div class="flex gap-md font-body-md text-body-md text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Terms</a>
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</footer>
+</body></html>

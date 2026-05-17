@@ -1,92 +1,136 @@
-import { Contact } from '../../domain/model/Contact';
-import { ContactId } from '../../domain/valueobject/ContactId';
-import { ContactGateway } from '../../domain/port/ContactGateway';
+import { apiFetch, parseApiError } from '@/shared/lib/apiFetch';
 import { CreateContactCommand } from '../../application/command/CreateContactCommand';
 import { UpdateContactCommand } from '../../application/command/UpdateContactCommand';
+import { Contact } from '../../domain/model/Contact';
+import { ContactGateway, LogActivityPayload } from '../../domain/port/ContactGateway';
+import { ContactId } from '../../domain/valueobject/ContactId';
 import { ContactApiMapper } from '../mapper/ContactApiMapper';
-import { ContactApiDto } from './ContactApiDto';
+import {
+  AssignTagsApiDto,
+  ContactApiDto,
+  ContactPageApiDto,
+  CreateContactApiDto,
+  LogActivityApiDto,
+  UpdateContactApiDto,
+} from './ContactApiDto';
 
-/**
- * HTTP adapter implementing {@link ContactGateway} using fetch.
- */
+export interface ContactListParams {
+  search?: string;
+  page?: number;
+  size?: number;
+}
+
 export class FetchContactGateway implements ContactGateway {
   constructor(private readonly baseUrl: string) {}
 
-  /**
-   * @inheritdoc
-   */
   async list(): Promise<Contact[]> {
-    const response = await fetch(`${this.baseUrl}/api/contacts`);
-    if (!response.ok) {
-      throw new Error(`Failed to list contacts: ${response.status}`);
-    }
-    const dtos = (await response.json()) as ContactApiDto[];
-    return ContactApiMapper.toDomainList(dtos);
+    const page = await this.listPaged({ page: 0, size: 500 });
+    return ContactApiMapper.toDomainList(page.content);
   }
 
-  /**
-   * @inheritdoc
-   */
+  async listPaged(params: ContactListParams): Promise<ContactPageApiDto> {
+    const query = new URLSearchParams();
+    if (params.search) query.set('search', params.search);
+    query.set('page', String(params.page ?? 0));
+    query.set('size', String(params.size ?? 20));
+    const response = await apiFetch(this.baseUrl, `/api/contacts?${query}`);
+    if (!response.ok) throw new Error(await parseApiError(response));
+    return (await response.json()) as ContactPageApiDto;
+  }
+
+  async getById(id: string): Promise<ContactApiDto> {
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${id}`);
+    if (!response.ok) throw new Error(await parseApiError(response));
+    return (await response.json()) as ContactApiDto;
+  }
+
   async create(command: CreateContactCommand): Promise<Contact> {
-    const response = await fetch(`${this.baseUrl}/api/contacts`, {
+    const body: CreateContactApiDto = toBody(command);
+    const response = await apiFetch(this.baseUrl, '/api/contacts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: command.firstName,
-        lastName: command.lastName,
-        email: command.email,
-        phone: command.phone ?? null,
-      }),
+      body: JSON.stringify(body),
     });
-    if (!response.ok) {
-      const message = await this.extractError(response);
-      throw new Error(message);
-    }
-    const dto = (await response.json()) as ContactApiDto;
-    return ContactApiMapper.toDomain(dto);
+    if (!response.ok) throw new Error(await parseApiError(response));
+    return ContactApiMapper.toDomain((await response.json()) as ContactApiDto);
   }
 
-  /**
-   * @inheritdoc
-   */
   async update(command: UpdateContactCommand): Promise<Contact> {
-    const response = await fetch(`${this.baseUrl}/api/contacts/${command.id.toString()}`, {
+    const body: UpdateContactApiDto = toBody(command);
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${command.id.toString()}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: command.firstName,
-        lastName: command.lastName,
-        email: command.email,
-        phone: command.phone ?? null,
-      }),
+      body: JSON.stringify(body),
     });
-    if (!response.ok) {
-      const message = await this.extractError(response);
-      throw new Error(message);
-    }
-    const dto = (await response.json()) as ContactApiDto;
-    return ContactApiMapper.toDomain(dto);
+    if (!response.ok) throw new Error(await parseApiError(response));
+    return ContactApiMapper.toDomain((await response.json()) as ContactApiDto);
   }
 
-  /**
-   * @inheritdoc
-   */
   async delete(id: ContactId): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/contacts/${id.toString()}`, {
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${id.toString()}`, {
       method: 'DELETE',
     });
     if (!response.ok && response.status !== 204) {
-      const message = await this.extractError(response);
-      throw new Error(message);
+      throw new Error(await parseApiError(response));
     }
   }
 
-  private async extractError(response: Response): Promise<string> {
-    try {
-      const body = (await response.json()) as { message?: string };
-      return body.message ?? `Request failed with status ${response.status}`;
-    } catch {
-      return `Request failed with status ${response.status}`;
-    }
+  async addNote(contactId: string, body: string): Promise<void> {
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    });
+    if (!response.ok) throw new Error(await parseApiError(response));
   }
+
+  async addActivity(contactId: string, payload: LogActivityPayload): Promise<void> {
+    const body: LogActivityApiDto = {
+      activityType: payload.activityType,
+      description: payload.description ?? null,
+      occurredAt: payload.occurredAt,
+    };
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/activities`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error(await parseApiError(response));
+  }
+
+  async assignTags(contactId: string, tagNames: string[]): Promise<void> {
+    const body: AssignTagsApiDto = { tagNames };
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/tags`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error(await parseApiError(response));
+  }
+
+  async uploadAvatar(contactId: string, file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(
+      `${this.baseUrl}/api/contacts/${contactId}/avatar`,
+      {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      },
+    );
+    if (!response.ok) throw new Error(await parseApiError(response));
+    const data = (await response.json()) as { avatarUrl: string };
+    return data.avatarUrl;
+  }
+}
+
+function toBody(command: CreateContactCommand | UpdateContactCommand): CreateContactApiDto {
+  return {
+    firstName: command.firstName,
+    lastName: command.lastName,
+    email: command.email,
+    phone: command.phone || null,
+    company: command.company ?? null,
+    jobTitle: command.jobTitle ?? null,
+    street: command.street ?? null,
+    city: command.city ?? null,
+    postalCode: command.postalCode ?? null,
+    country: command.country ?? null,
+  };
 }

@@ -44,4 +44,35 @@ public class UpdateContactRequest {
     @Size(max = 30)
     @Pattern(regexp = "^[+0-9]{7,30}$", message = "phone format is invalid")
     private String phone;
+
+    @Schema(description = "Company name", maxLength = 200)
+    @Size(max = 200)
+    private String company;
+
+    @Schema(description = "Job title", maxLength = 150)
+    @Size(max = 150)
+    private String jobTitle;
+
+    @Schema(description = "Street address", maxLength = 255)
+    @Size(max = 255)
+    private String street;
+
+    @Schema(description = "City", maxLength = 100)
+    @Size(max = 100)
+    private String city;
+
+    @Schema(description = "Postal code", maxLength = 20)
+    @Size(max = 20)
+    private String postalCode;
+
+    @Schema(description = "Country", maxLength = 100)
+    @Size(max = 100)
+    private String country;
+
+    @Schema(description = "Contact status", example = "ACTIVE")
+    @Pattern(regexp = "^(ACTIVE|INACTIVE|LEAD)$", message = "status is invalid")
+    private String status;
+
+    @Schema(description = "Assigned user UUID")
+    private String assignedToUserId;
 }

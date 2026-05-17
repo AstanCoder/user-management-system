@@ -23,8 +23,8 @@ class ContactUniquenessPolicyTest {
     @Test
     void assertUniqueForCreate_throwsWhenEmailExists() {
         Email email = Email.create("a@example.com");
-        Contact existing =
-                Contact.create(ContactId.generate(), "A", "B", email, null);
+        Contact existing = Contact.create(
+                ContactId.generate(), "A", "B", email, null, null, null, null, null, null);
         when(contactRepository.findByEmail(email)).thenReturn(Optional.of(existing));
 
         ContactUniquenessPolicy policy = new ContactUniquenessPolicy(contactRepository);

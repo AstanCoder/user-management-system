@@ -17,7 +17,7 @@ import org.mapstruct.Mapping;
 /**
  * Maps user REST DTOs to application layer.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = UserId.class)
 public interface UserRestMapper {
 
     /**
