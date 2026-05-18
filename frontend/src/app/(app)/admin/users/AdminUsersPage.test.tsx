@@ -97,6 +97,11 @@ describe('AdminUsersPage', () => {
     await screen.findByText('Jane Doe');
     const menuButtons = screen.getAllByLabelText('More options');
     fireEvent.click(menuButtons[1]);
+    const table = screen.getByRole('table');
+    const tableContainer = table.parentElement;
+    expect(tableContainer).not.toBeNull();
+    expect(tableContainer?.textContent).not.toContain('Set as VIEWER');
+    expect(screen.getByText('Set as VIEWER')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Set as VIEWER'));
     await waitFor(() => {
       expect(mockUpdateUser).toHaveBeenCalledWith('2', {

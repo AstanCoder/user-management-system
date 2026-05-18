@@ -17,3 +17,7 @@ databaseChangeLog:
       file: db/changelog/changes/008-add-last-active-at-to-users.yaml
   - include:
       file: db/changelog/changes/009-add-confirmed-to-activities.yaml
+  - include:
+      file: db/changelog/changes/010-allow-null-password-hash-for-invited-users.yaml
+  - include:
+      file: db/changelog/changes/011-enforce-password-hash-for-non-invited-users.yaml

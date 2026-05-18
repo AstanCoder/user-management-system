@@ -1,7 +1,9 @@
 package com.example.user.interfaces.rest;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -9,6 +11,7 @@ import com.example.shared.test.WebMvcTestSecurityConfig;
 import com.example.identity.infrastructure.config.SecurityConfig;
 import com.example.identity.infrastructure.security.JwtAuthenticationFilter;
 import com.example.user.application.command.UserPageResult;
+import com.example.user.application.command.UserResult;
 import com.example.user.application.command.UserSearchQuery;
 import com.example.user.application.command.UserStatsResult;
 import com.example.user.application.port.in.CreateUserUseCase;
@@ -17,8 +20,13 @@ import com.example.user.application.port.in.GetUserStatsUseCase;
 import com.example.user.application.port.in.InviteUserUseCase;
 import com.example.user.application.port.in.ListUsersUseCase;
 import com.example.user.application.port.in.UpdateUserUseCase;
+import com.example.user.domain.model.Role;
+import com.example.user.domain.model.UserId;
+import com.example.user.domain.model.UserStatus;
 import com.example.user.interfaces.rest.exception.UserExceptionHandler;
 import com.example.user.interfaces.rest.mapper.UserRestMapperImpl;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -98,5 +106,38 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalUsers").value(3))
                 .andExpect(jsonPath("$.activeUsers").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void invite_asAdmin_returns201() throws Exception {
+        Instant now = Instant.parse("2026-05-18T04:00:00Z");
+        when(inviteUserUseCase.execute(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(UserResult.builder()
+                        .id(UserId.of(UUID.fromString("11111111-1111-1111-1111-111111111111")))
+                        .email("invitee@nexuscrm.com")
+                        .firstName("Invitee")
+                        .lastName("User")
+                        .role(Role.EDITOR)
+                        .status(UserStatus.INVITED)
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .lastActiveAt(null)
+                        .build());
+
+        mockMvc.perform(post("/api/users/invite")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "email": "invitee@nexuscrm.com",
+                                  "firstName": "Invitee",
+                                  "lastName": "User",
+                                  "role": "EDITOR"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.email").value("invitee@nexuscrm.com"))
+                .andExpect(jsonPath("$.status").value("INVITED"));
     }
 }
