@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Search, UserPlus, Users, Shield, PenLine } from 'lucide-react';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
 import { useUserAdmin } from '@/user/interfaces/hooks/useUserAdmin';
-import { userDependencies } from '@/user/infrastructure/config/userDependencies';
 import { UserDto, UserRole } from '@/user/domain/port/UserAdminGateway';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Badge, BadgeProps } from '@/shared/ui/Badge';
@@ -45,7 +44,7 @@ export default function AdminUsersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const { users, stats, loading, error, totalElements, totalPages, refetch } = useUserAdmin({
+  const { users, stats, loading, error, totalElements, totalPages, updateUser, deleteUser } = useUserAdmin({
     search,
     page,
     size: PAGE_SIZE,
@@ -61,13 +60,12 @@ export default function AdminUsersPage() {
     setBusyId(target.id);
     setActionError(null);
     try {
-      await userDependencies.userAdminGateway.update(target.id, {
+      await updateUser(target.id, {
         firstName: target.firstName,
         lastName: target.lastName,
         role,
         status: target.status,
       });
-      await refetch();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed to update role');
     } finally {
@@ -84,8 +82,7 @@ export default function AdminUsersPage() {
     setBusyId(target.id);
     setActionError(null);
     try {
-      await userDependencies.userAdminGateway.delete(target.id);
-      await refetch();
+      await deleteUser(target.id);
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed to delete user');
     } finally {
@@ -128,11 +125,7 @@ export default function AdminUsersPage() {
             subtitle={`${stats.invitedPendingCount} Pending`}
             icon={Shield}
           />
-          <StatCard
-            label="System Editors"
-            value={stats.editorCount}
-            icon={PenLine}
-          />
+          <StatCard label="System Editors" value={stats.editorCount} icon={PenLine} />
         </div>
       )}
 
@@ -179,9 +172,7 @@ export default function AdminUsersPage() {
                         <div>
                           <p className="font-medium text-on-surface">
                             {fullName}
-                            {isSelf && (
-                              <span className="ml-2 text-xs text-secondary">(you)</span>
-                            )}
+                            {isSelf && <span className="ml-2 text-xs text-secondary">(you)</span>}
                           </p>
                           <p className="text-xs text-on-surface-variant">{u.email}</p>
                         </div>

@@ -11,8 +11,6 @@ import { Button } from '@/shared/ui/Button';
 import { Chip } from '@/shared/ui/Chip';
 import { DropdownMenu } from '@/shared/ui/DropdownMenu';
 import { Pagination } from '@/shared/ui/Pagination';
-import { contactDependencies } from '@/contact/infrastructure/config/contactDependencies';
-import { ContactId } from '@/contact/domain/valueobject/ContactId';
 import type { ContactViewModel } from '@/contact/application/command/ContactViewModel';
 
 const PAGE_SIZE = 20;
@@ -22,7 +20,7 @@ export default function ContactsDirectoryPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const { items, loading, error, totalElements, totalPages, refetch } = useContactDirectory({
+  const { items, loading, error, totalElements, totalPages, deleteContact } = useContactDirectory({
     search,
     page,
     size: PAGE_SIZE,
@@ -33,8 +31,7 @@ export default function ContactsDirectoryPage() {
   async function handleDelete(contact: ContactViewModel) {
     if (!confirm(`Delete "${contact.fullName}"? This cannot be undone.`)) return;
     try {
-      await contactDependencies.contactGateway.delete(ContactId.of(contact.id));
-      void refetch();
+      await deleteContact(contact.id);
     } catch {
       alert('Failed to delete contact.');
     }
@@ -92,10 +89,7 @@ export default function ContactsDirectoryPage() {
           {search && (
             <p className="mt-1 text-sm">
               Try adjusting your search, or{' '}
-              <button
-                className="underline hover:text-on-surface"
-                onClick={() => setSearch('')}
-              >
+              <button className="underline hover:text-on-surface" onClick={() => setSearch('')}>
                 clear filters
               </button>
               .
@@ -146,9 +140,7 @@ function ContactCard({ contact, canEdit, onView, onEdit, onDelete }: ContactCard
   const actions = [
     { label: 'View', onClick: onView },
     ...(canEdit ? [{ label: 'Edit', onClick: onEdit }] : []),
-    ...(canEdit
-      ? [{ label: 'Delete', onClick: onDelete, destructive: true as const }]
-      : []),
+    ...(canEdit ? [{ label: 'Delete', onClick: onDelete, destructive: true as const }] : []),
   ];
 
   return (
@@ -164,9 +156,7 @@ function ContactCard({ contact, canEdit, onView, onEdit, onDelete }: ContactCard
         <Avatar name={contact.fullName} src={contact.avatarUrl} size="lg" />
         <div className="min-w-0 w-full">
           <p className="font-semibold text-on-surface">{contact.fullName}</p>
-          {contact.jobTitle && (
-            <p className="mt-0.5 text-xs text-on-surface-variant">{contact.jobTitle}</p>
-          )}
+          {contact.jobTitle && <p className="mt-0.5 text-xs text-on-surface-variant">{contact.jobTitle}</p>}
         </div>
       </div>
 
@@ -188,9 +178,7 @@ function ContactCard({ contact, canEdit, onView, onEdit, onDelete }: ContactCard
           {contact.tags.slice(0, 3).map((tag) => (
             <Chip key={tag.id} label={tag.name} />
           ))}
-          {contact.tags.length > 3 && (
-            <Chip label={`+${contact.tags.length - 3}`} />
-          )}
+          {contact.tags.length > 3 && <Chip label={`+${contact.tags.length - 3}`} />}
         </div>
       )}
     </div>

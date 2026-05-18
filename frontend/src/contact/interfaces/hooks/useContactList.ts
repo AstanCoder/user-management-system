@@ -1,35 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ContactViewModel } from '../../application/command/ContactViewModel';
 import { ContactDependencies } from '../../infrastructure/config/contactDependencies';
+import { contactQueryKeys } from '../query/contactQueryKeys';
 
-/**
- * Loads and exposes the contact list via the list use case.
- * @param deps - wired contact dependencies
- * @returns list state and refetch handler
- */
 export function useContactList(deps: ContactDependencies) {
-  const [items, setItems] = useState<ContactViewModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const listQuery = useQuery<ContactViewModel[]>({
+    queryKey: contactQueryKeys.allList,
+    queryFn: async () => deps.listContactsUseCase.execute(),
+  });
 
-  const refetch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await deps.listContactsUseCase.execute();
-      setItems(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load contacts');
-    } finally {
-      setLoading(false);
-    }
-  }, [deps]);
-
-  useEffect(() => {
-    void refetch();
-  }, [refetch]);
-
-  return { items, loading, error, refetch };
+  return {
+    items: listQuery.data ?? [],
+    loading: listQuery.isPending,
+    error: listQuery.error instanceof Error ? listQuery.error.message : null,
+    refetch: () => {
+      void listQuery.refetch();
+    },
+  };
 }

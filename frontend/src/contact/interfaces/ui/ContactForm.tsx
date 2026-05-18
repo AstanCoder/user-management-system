@@ -1,9 +1,17 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { ContactViewModel } from '../../application/command/ContactViewModel';
 import { InvalidContactDataError } from '../../domain/exception/InvalidContactDataError';
 import { Email } from '../../domain/valueobject/Email';
+
+interface ContactModalFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
 
 export interface ContactFormProps {
   initial?: ContactViewModel | null;
@@ -16,41 +24,40 @@ export interface ContactFormProps {
   onCancel: () => void;
 }
 
-/**
- * Modal form for creating or editing a contact.
- */
 export function ContactForm({ initial, onSubmit, onCancel }: ContactFormProps) {
-  const [firstName, setFirstName] = useState(initial?.firstName ?? '');
-  const [lastName, setLastName] = useState(initial?.lastName ?? '');
-  const [email, setEmail] = useState(initial?.email ?? '');
-  const [phone, setPhone] = useState(initial?.phone ?? '');
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+
+  const defaults = useMemo<ContactModalFormData>(
+    () => ({
+      firstName: initial?.firstName ?? '',
+      lastName: initial?.lastName ?? '',
+      email: initial?.email ?? '',
+      phone: initial?.phone ?? '',
+    }),
+    [initial],
+  );
+
+  const { register, reset, formState, handleSubmit } = useForm<ContactModalFormData>({
+    defaultValues: defaults,
+  });
 
   useEffect(() => {
-    setFirstName(initial?.firstName ?? '');
-    setLastName(initial?.lastName ?? '');
-    setEmail(initial?.email ?? '');
-    setPhone(initial?.phone ?? '');
+    reset(defaults);
     setError(null);
-  }, [initial]);
+  }, [defaults, reset]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const submit = async (data: ContactModalFormData) => {
     setError(null);
     try {
-      Email.create(email);
-      setSubmitting(true);
+      Email.create(data.email);
       await onSubmit({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        email: data.email.trim(),
+        phone: data.phone.trim(),
       });
     } catch (err) {
       setError(err instanceof InvalidContactDataError ? err.message : 'Failed to save contact');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -64,30 +71,30 @@ export function ContactForm({ initial, onSubmit, onCancel }: ContactFormProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="contact-form-title">{initial ? 'Edit contact' : 'Add contact'}</h2>
-        <form onSubmit={handleSubmit} className="contact-form">
+        <form onSubmit={(e) => void handleSubmit(submit)(e)} className="contact-form">
           <label>
             First name
-            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+            <input {...register('firstName', { required: true })} required />
           </label>
           <label>
             Last name
-            <input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+            <input {...register('lastName', { required: true })} required />
           </label>
           <label>
             Email
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input type="email" {...register('email', { required: true })} required />
           </label>
           <label>
             Phone (optional)
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <input {...register('phone')} />
           </label>
           {error && <p className="form-error">{error}</p>}
           <footer className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={onCancel}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Saving…' : 'Save'}
+            <button type="submit" className="btn btn-primary" disabled={formState.isSubmitting}>
+              {formState.isSubmitting ? 'Saving…' : 'Save'}
             </button>
           </footer>
         </form>

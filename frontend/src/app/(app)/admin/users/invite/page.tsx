@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
 import { userDependencies } from '@/user/infrastructure/config/userDependencies';
 import { UserRole } from '@/user/domain/port/UserAdminGateway';
@@ -27,44 +28,60 @@ const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = 
   },
 ];
 
+interface InviteFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+}
+
 export default function InviteUserPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('EDITOR');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const { register, watch, setValue, handleSubmit, formState } = useForm<InviteFormData>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      role: 'EDITOR',
+    },
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: async (form: InviteFormData) =>
+      userDependencies.userAdminGateway.invite({
+        email: form.email.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        role: form.role,
+      }),
+    onSuccess: () => {
+      router.push('/admin/users');
+    },
+  });
 
   if (user && user.role !== 'ADMIN') {
     router.replace('/contacts');
     return null;
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
+  const role = watch('role');
+
+  const submit = async (data: InviteFormData) => {
     try {
-      await userDependencies.userAdminGateway.invite({
-        email: email.trim(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        role,
-      });
-      router.push('/admin/users');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to send invitation';
-      setError(
-        message.toLowerCase().includes('already') || message.includes('409')
-          ? 'This email is already registered'
-          : message,
-      );
-    } finally {
-      setSubmitting(false);
+      await inviteMutation.mutateAsync(data);
+    } catch {
+      // handled by mutation.error rendering
     }
   };
+
+  const errorMessage =
+    inviteMutation.error instanceof Error
+      ? inviteMutation.error.message.toLowerCase().includes('already') ||
+        inviteMutation.error.message.includes('409')
+        ? 'This email is already registered'
+        : inviteMutation.error.message
+      : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -88,7 +105,7 @@ export default function InviteUserPage() {
       </div>
 
       <form
-        onSubmit={(e) => void handleSubmit(e)}
+        onSubmit={(e) => void handleSubmit(submit)(e)}
         className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
       >
         <div className="space-y-6">
@@ -100,9 +117,7 @@ export default function InviteUserPage() {
               <input
                 id="firstName"
                 type="text"
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                {...register('firstName', { required: true })}
                 placeholder="Jane"
                 className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
@@ -114,9 +129,7 @@ export default function InviteUserPage() {
               <input
                 id="lastName"
                 type="text"
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                {...register('lastName', { required: true })}
                 placeholder="Doe"
                 className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
@@ -130,9 +143,7 @@ export default function InviteUserPage() {
             <input
               id="email"
               type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...register('email', { required: true })}
               placeholder="colleague@company.com"
               className="w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -152,10 +163,9 @@ export default function InviteUserPage() {
                 >
                   <input
                     type="radio"
-                    name="role"
                     value={option.value}
                     checked={role === option.value}
-                    onChange={() => setRole(option.value)}
+                    onChange={() => setValue('role', option.value, { shouldDirty: true })}
                     className="mt-0.5 accent-primary"
                   />
                   <div>
@@ -167,9 +177,9 @@ export default function InviteUserPage() {
             </div>
           </fieldset>
 
-          {error && (
+          {errorMessage && (
             <p className="rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">
-              {error}
+              {errorMessage}
             </p>
           )}
 
@@ -179,8 +189,8 @@ export default function InviteUserPage() {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Send Invitation'}
+            <Button type="submit" disabled={inviteMutation.isPending || formState.isSubmitting}>
+              {inviteMutation.isPending ? 'Sending…' : 'Send Invitation'}
             </Button>
           </div>
         </div>

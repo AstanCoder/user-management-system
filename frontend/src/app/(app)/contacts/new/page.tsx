@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { X, Camera, User } from 'lucide-react';
 import { contactDependencies } from '@/contact/infrastructure/config/contactDependencies';
-import {
-  ContactFormData,
-  ContactFormFields,
-} from '@/contact/interfaces/ui/ContactFormFields';
+import { contactQueryKeys } from '@/contact/interfaces/query/contactQueryKeys';
+import { ContactFormData, ContactFormFields } from '@/contact/interfaces/ui/ContactFormFields';
 import { Button } from '@/shared/ui/Button';
 
 const EMPTY_FORM: ContactFormData = {
@@ -28,17 +28,17 @@ const EMPTY_FORM: ContactFormData = {
 
 export default function NewContactPage() {
   const router = useRouter();
-  const [form, setForm] = useState<ContactFormData>(EMPTY_FORM);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
+  const { register, watch, setValue, formState, handleSubmit } = useForm<ContactFormData>({
+    defaultValues: EMPTY_FORM,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (form: ContactFormData) => {
       const contact = await contactDependencies.createContactUseCase.execute({
         firstName: form.firstName,
         lastName: form.lastName,
@@ -63,12 +63,21 @@ export default function NewContactPage() {
         await contactDependencies.contactGateway.uploadAvatar(contactId, avatarFile);
       }
 
+      return contactId;
+    },
+    onSuccess: async (contactId) => {
+      await queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
       router.push(`/contacts/${contactId}`);
+    },
+  });
+
+  const onSubmit = async (form: ContactFormData) => {
+    setError(null);
+    try {
+      await createMutation.mutateAsync(form);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create contact';
       setError(message.includes('409') ? 'Email already in use' : message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -89,7 +98,7 @@ export default function NewContactPage() {
       </div>
 
       <form
-        onSubmit={(e) => void handleSubmit(e)}
+        onSubmit={(e) => void handleSubmit(onSubmit)(e)}
         className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
       >
         <div className="mb-6 flex flex-col items-center gap-3">
@@ -130,7 +139,15 @@ export default function NewContactPage() {
           </button>
         </div>
 
-        <ContactFormFields form={form} onChange={setForm} showNotes showTags showAddress />
+        <ContactFormFields
+          register={register}
+          watch={watch}
+          setValue={setValue}
+          errors={formState.errors}
+          showNotes
+          showTags
+          showAddress
+        />
 
         {error && (
           <p className="mt-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">
@@ -144,8 +161,8 @@ export default function NewContactPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Saving…' : 'Save Contact'}
+          <Button type="submit" disabled={createMutation.isPending}>
+            {createMutation.isPending ? 'Saving…' : 'Save Contact'}
           </Button>
         </div>
       </form>

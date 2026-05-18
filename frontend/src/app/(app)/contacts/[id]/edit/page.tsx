@@ -1,75 +1,74 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { X, Camera, User } from 'lucide-react';
 import { ContactId } from '@/contact/domain/valueobject/ContactId';
 import { contactDependencies } from '@/contact/infrastructure/config/contactDependencies';
-import {
-  ContactFormData,
-  ContactFormFields,
-} from '@/contact/interfaces/ui/ContactFormFields';
+import { contactQueryKeys } from '@/contact/interfaces/query/contactQueryKeys';
+import { ContactFormData, ContactFormFields } from '@/contact/interfaces/ui/ContactFormFields';
 import { Button } from '@/shared/ui/Button';
+
+const EMPTY_FORM: ContactFormData = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  company: '',
+  jobTitle: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  country: '',
+  notes: '',
+  tags: [],
+};
 
 export default function EditContactPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const id = params.id as string;
-  const [form, setForm] = useState<ContactFormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    company: '',
-    jobTitle: '',
-    street: '',
-    city: '',
-    postalCode: '',
-    country: '',
-    notes: '',
-    tags: [],
-  });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const dto = await contactDependencies.contactGateway.getById(id);
-      setForm({
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        email: dto.email,
-        phone: dto.phone ?? '',
-        company: dto.company ?? '',
-        jobTitle: dto.jobTitle ?? '',
-        street: dto.street ?? '',
-        city: dto.city ?? '',
-        postalCode: dto.postalCode ?? '',
-        country: dto.country ?? '',
-        notes: '',
-        tags: (dto.tags ?? []).map((t) => t.name),
-      });
-      setAvatarUrl(dto.avatarUrl);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const { register, watch, setValue, reset, formState, handleSubmit } = useForm<ContactFormData>({
+    defaultValues: EMPTY_FORM,
+  });
+
+  const contactQuery = useQuery({
+    queryKey: contactQueryKeys.detail(id),
+    enabled: Boolean(id),
+    queryFn: async () => contactDependencies.contactGateway.getById(id),
+  });
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const dto = contactQuery.data;
+    if (!dto) return;
+    reset({
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email,
+      phone: dto.phone ?? '',
+      company: dto.company ?? '',
+      jobTitle: dto.jobTitle ?? '',
+      street: dto.street ?? '',
+      city: dto.city ?? '',
+      postalCode: dto.postalCode ?? '',
+      country: dto.country ?? '',
+      notes: '',
+      tags: (dto.tags ?? []).map((t) => t.name),
+    });
+    setAvatarUrl(dto.avatarUrl);
+  }, [contactQuery.data, reset]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async (form: ContactFormData) => {
       await contactDependencies.updateContactUseCase.execute({
         id: ContactId.of(id),
         firstName: form.firstName,
@@ -85,21 +84,33 @@ export default function EditContactPage() {
       });
       await contactDependencies.contactGateway.assignTags(id, form.tags);
       if (avatarFile) {
-        const url = await contactDependencies.contactGateway.uploadAvatar(id, avatarFile);
-        setAvatarUrl(url);
+        const uploadedUrl = await contactDependencies.contactGateway.uploadAvatar(id, avatarFile);
+        setAvatarUrl(uploadedUrl);
       }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: contactQueryKeys.detail(id) });
       router.push(`/contacts/${id}`);
+    },
+  });
+
+  const onSubmit = async (form: ContactFormData) => {
+    setError(null);
+    try {
+      await updateMutation.mutateAsync(form);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update contact';
       setError(message.includes('409') ? 'Email already in use' : message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  if (loading) return <p className="text-on-surface-variant">Loading…</p>;
+  const previewSrc = useMemo(
+    () => (avatarFile ? URL.createObjectURL(avatarFile) : avatarUrl),
+    [avatarFile, avatarUrl],
+  );
 
-  const previewSrc = avatarFile ? URL.createObjectURL(avatarFile) : avatarUrl;
+  if (contactQuery.isPending) return <p className="text-on-surface-variant">Loading…</p>;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -118,7 +129,7 @@ export default function EditContactPage() {
       </div>
 
       <form
-        onSubmit={(e) => void handleSubmit(e)}
+        onSubmit={(e) => void handleSubmit(onSubmit)(e)}
         className="rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-outline-variant"
       >
         <div className="mb-6 flex flex-col items-center gap-3">
@@ -155,7 +166,14 @@ export default function EditContactPage() {
           </button>
         </div>
 
-        <ContactFormFields form={form} onChange={setForm} showTags showAddress />
+        <ContactFormFields
+          register={register}
+          watch={watch}
+          setValue={setValue}
+          errors={formState.errors}
+          showTags
+          showAddress
+        />
 
         {error && (
           <p className="mt-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">
@@ -169,8 +187,8 @@ export default function EditContactPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Saving…' : 'Save Changes'}
+          <Button type="submit" disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
           </Button>
         </div>
       </form>

@@ -1,30 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import { identityDependencies } from '@/identity/infrastructure/config/identityDependencies';
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+interface ForgotPasswordFormData {
+  email: string;
+}
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+export default function ForgotPasswordPage() {
+  const { register, handleSubmit, formState } = useForm<ForgotPasswordFormData>({
+    defaultValues: { email: '' },
+  });
+
+  const forgotMutation = useMutation({
+    mutationFn: async (form: ForgotPasswordFormData) =>
+      identityDependencies.authGateway.forgotPassword(form.email),
+  });
+
+  const submit = async (form: ForgotPasswordFormData) => {
     try {
-      await identityDependencies.authGateway.forgotPassword(email);
-      setSent(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed');
-    } finally {
-      setLoading(false);
+      await forgotMutation.mutateAsync(form);
+    } catch {
+      // rendered below
     }
   };
+
+  const sent = forgotMutation.isSuccess;
 
   return (
     <main className="w-full max-w-md rounded-xl border border-outline-variant bg-surface-container-lowest p-8 shadow-sm">
@@ -33,13 +38,17 @@ export default function ForgotPasswordPage() {
         Enter your email and we will send reset instructions if an account exists.
       </p>
       {sent ? (
-        <p className="mt-6 text-sm text-secondary">If the email is registered, you will receive a reset link shortly.</p>
+        <p className="mt-6 text-sm text-secondary">
+          If the email is registered, you will receive a reset link shortly.
+        </p>
       ) : (
-        <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 flex flex-col gap-4">
-          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          {error && <p className="text-sm text-error">{error}</p>}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Sending…' : 'Send reset link'}
+        <form onSubmit={(e) => void handleSubmit(submit)(e)} className="mt-6 flex flex-col gap-4">
+          <Input label="Email" type="email" {...register('email', { required: true })} required />
+          {forgotMutation.error instanceof Error && (
+            <p className="text-sm text-error">{forgotMutation.error.message}</p>
+          )}
+          <Button type="submit" disabled={forgotMutation.isPending || formState.isSubmitting} className="w-full">
+            {forgotMutation.isPending ? 'Sending…' : 'Send reset link'}
           </Button>
         </form>
       )}

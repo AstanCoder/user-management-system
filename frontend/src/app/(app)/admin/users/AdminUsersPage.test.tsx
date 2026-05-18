@@ -1,17 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockUpdate, mockDelete, mockRefetch } = vi.hoisted(() => ({
-  mockUpdate: vi.fn().mockResolvedValue({
-    id: '2',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    email: 'jane@example.com',
-    role: 'VIEWER',
-    status: 'ACTIVE',
-    lastActiveAt: null,
-  }),
-  mockDelete: vi.fn().mockResolvedValue(undefined),
+const { mockUpdateUser, mockDeleteUser, mockRefetch } = vi.hoisted(() => ({
+  mockUpdateUser: vi.fn().mockResolvedValue(undefined),
+  mockDeleteUser: vi.fn().mockResolvedValue(undefined),
   mockRefetch: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -76,16 +68,9 @@ vi.mock('@/user/interfaces/hooks/useUserAdmin', () => ({
     totalPages: 1,
     setPage: vi.fn(),
     refetch: mockRefetch,
+    updateUser: mockUpdateUser,
+    deleteUser: mockDeleteUser,
   }),
-}));
-
-vi.mock('@/user/infrastructure/config/userDependencies', () => ({
-  userDependencies: {
-    userAdminGateway: {
-      update: mockUpdate,
-      delete: mockDelete,
-    },
-  },
 }));
 
 import AdminUsersPage from './page';
@@ -114,7 +99,7 @@ describe('AdminUsersPage', () => {
     fireEvent.click(menuButtons[1]);
     fireEvent.click(screen.getByText('Set as VIEWER'));
     await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalledWith('2', {
+      expect(mockUpdateUser).toHaveBeenCalledWith('2', {
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'VIEWER',

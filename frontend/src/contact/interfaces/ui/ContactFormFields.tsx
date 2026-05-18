@@ -1,6 +1,12 @@
 'use client';
 
 import { Building2, Briefcase, Mail, Phone, MapPin } from 'lucide-react';
+import {
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from 'react-hook-form';
 import { TagEditor } from '@/shared/ui/TagEditor';
 import { Input } from '@/shared/ui/Input';
 
@@ -20,8 +26,10 @@ export interface ContactFormData {
 }
 
 interface ContactFormFieldsProps {
-  form: ContactFormData;
-  onChange: (form: ContactFormData) => void;
+  register: UseFormRegister<ContactFormData>;
+  watch: UseFormWatch<ContactFormData>;
+  setValue: UseFormSetValue<ContactFormData>;
+  errors: FieldErrors<ContactFormData>;
   showNotes?: boolean;
   showAddress?: boolean;
   showTags?: boolean;
@@ -30,8 +38,13 @@ interface ContactFormFieldsProps {
 function IconInput({
   icon: Icon,
   label,
+  error,
   ...props
-}: React.ComponentProps<'input'> & { icon: React.ComponentType<{ className?: string }>; label: string }) {
+}: React.ComponentProps<'input'> & {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  error?: string;
+}) {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-medium text-on-surface">{label}</label>
@@ -42,68 +55,55 @@ function IconInput({
           className="w-full rounded-lg border border-outline-variant bg-surface-container-low py-2.5 pl-9 pr-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
+      {error && <p className="mt-1 text-xs text-error">{error}</p>}
     </div>
   );
 }
 
 export function ContactFormFields({
-  form,
-  onChange,
+  register,
+  watch,
+  setValue,
+  errors,
   showNotes = false,
   showAddress = true,
   showTags = true,
 }: ContactFormFieldsProps) {
-  const set = (patch: Partial<ContactFormData>) => onChange({ ...form, ...patch });
+  const tags = watch('tags') ?? [];
 
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           label="First Name"
-          value={form.firstName}
-          onChange={(e) => set({ firstName: e.target.value })}
-          required
+          {...register('firstName', { required: 'First name is required' })}
+          error={errors.firstName?.message}
         />
         <Input
           label="Last Name"
-          value={form.lastName}
-          onChange={(e) => set({ lastName: e.target.value })}
-          required
+          {...register('lastName', { required: 'Last name is required' })}
+          error={errors.lastName?.message}
         />
       </div>
 
-      <IconInput
-        icon={Building2}
-        label="Company"
-        value={form.company}
-        onChange={(e) => set({ company: e.target.value })}
-      />
-      <IconInput
-        icon={Briefcase}
-        label="Position"
-        value={form.jobTitle}
-        onChange={(e) => set({ jobTitle: e.target.value })}
-      />
+      <IconInput icon={Building2} label="Company" {...register('company')} error={errors.company?.message} />
+      <IconInput icon={Briefcase} label="Position" {...register('jobTitle')} error={errors.jobTitle?.message} />
       <IconInput
         icon={Mail}
         label="Email"
         type="email"
-        value={form.email}
-        onChange={(e) => set({ email: e.target.value })}
-        required
+        {...register('email', { required: 'Email is required' })}
+        error={errors.email?.message}
       />
-      <IconInput
-        icon={Phone}
-        label="Phone"
-        type="tel"
-        value={form.phone}
-        onChange={(e) => set({ phone: e.target.value })}
-      />
+      <IconInput icon={Phone} label="Phone" type="tel" {...register('phone')} error={errors.phone?.message} />
 
       {showTags && (
         <div>
           <label className="mb-1.5 block text-sm font-medium text-on-surface">Tags</label>
-          <TagEditor tags={form.tags} onChange={(tags) => set({ tags })} />
+          <TagEditor
+            tags={tags}
+            onChange={(nextTags) => setValue('tags', nextTags, { shouldDirty: true })}
+          />
         </div>
       )}
 
@@ -114,8 +114,7 @@ export function ContactFormFields({
           </label>
           <textarea
             id="notes"
-            value={form.notes}
-            onChange={(e) => set({ notes: e.target.value })}
+            {...register('notes')}
             rows={4}
             placeholder="Add initial notes about this contact…"
             className="w-full resize-y rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -130,24 +129,16 @@ export function ContactFormFields({
             Address
           </legend>
           <div className="space-y-3">
-            <Input
-              label="Street"
-              value={form.street}
-              onChange={(e) => set({ street: e.target.value })}
-            />
+            <Input label="Street" {...register('street')} error={errors.street?.message} />
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input label="City" value={form.city} onChange={(e) => set({ city: e.target.value })} />
+              <Input label="City" {...register('city')} error={errors.city?.message} />
               <Input
                 label="Postal Code"
-                value={form.postalCode}
-                onChange={(e) => set({ postalCode: e.target.value })}
+                {...register('postalCode')}
+                error={errors.postalCode?.message}
               />
             </div>
-            <Input
-              label="Country"
-              value={form.country}
-              onChange={(e) => set({ country: e.target.value })}
-            />
+            <Input label="Country" {...register('country')} error={errors.country?.message} />
           </div>
         </fieldset>
       )}

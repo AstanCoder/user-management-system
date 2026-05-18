@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { userDependencies } from '../../infrastructure/config/userDependencies';
-import { UserDto, UserStatsDto } from '../../domain/port/UserAdminGateway';
+import { InviteUserPayload, UpdateUserPayload } from '../../domain/port/UserAdminGateway';
+import { userQueryKeys } from '../query/userQueryKeys';
 
 export interface UseUserAdminOptions {
   search?: string;
@@ -13,46 +15,69 @@ export interface UseUserAdminOptions {
 export function useUserAdmin(options: UseUserAdminOptions = {}) {
   const { search, size = 20 } = options;
   const [page, setPage] = useState(options.page ?? 0);
-  const [users, setUsers] = useState<UserDto[]>([]);
-  const [stats, setStats] = useState<UserStatsDto | null>(null);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const refetch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [pageResult, statsResult] = await Promise.all([
-        userDependencies.userAdminGateway.list({ page, size, search: search || undefined }),
-        userDependencies.userAdminGateway.stats(),
-      ]);
-      setUsers(pageResult.content);
-      setTotalElements(pageResult.totalElements);
-      setTotalPages(pageResult.totalPages);
-      setStats(statsResult);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, size, search]);
+  const normalizedSearch = useMemo(() => (search ?? '').trim(), [search]);
+  const [debouncedSearch, setDebouncedSearch] = useState(normalizedSearch);
 
   useEffect(() => {
-    const timer = setTimeout(() => void refetch(), 300);
+    const timer = setTimeout(() => setDebouncedSearch(normalizedSearch), 300);
     return () => clearTimeout(timer);
-  }, [refetch]);
+  }, [normalizedSearch]);
+
+  const usersQuery = useQuery({
+    queryKey: userQueryKeys.list(debouncedSearch, page, size),
+    queryFn: async () =>
+      userDependencies.userAdminGateway.list({
+        page,
+        size,
+        search: debouncedSearch || undefined,
+      }),
+  });
+
+  const statsQuery = useQuery({
+    queryKey: userQueryKeys.stats,
+    queryFn: async () => userDependencies.userAdminGateway.stats(),
+  });
+
+  const invalidateUsers = async () => {
+    await queryClient.invalidateQueries({ queryKey: userQueryKeys.all });
+  };
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
+      userDependencies.userAdminGateway.update(id, payload),
+    onSuccess: invalidateUsers,
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: string) => userDependencies.userAdminGateway.delete(id),
+    onSuccess: invalidateUsers,
+  });
+
+  const inviteUserMutation = useMutation({
+    mutationFn: async (payload: InviteUserPayload) => userDependencies.userAdminGateway.invite(payload),
+    onSuccess: invalidateUsers,
+  });
 
   return {
-    users,
-    stats,
-    loading,
-    error,
+    users: usersQuery.data?.content ?? [],
+    stats: statsQuery.data ?? null,
+    loading: usersQuery.isPending || statsQuery.isPending,
+    error:
+      (usersQuery.error instanceof Error ? usersQuery.error.message : null) ??
+      (statsQuery.error instanceof Error ? statsQuery.error.message : null),
     page,
-    totalElements,
-    totalPages,
+    totalElements: usersQuery.data?.totalElements ?? 0,
+    totalPages: usersQuery.data?.totalPages ?? 0,
     setPage,
-    refetch,
+    refetch: () => {
+      void usersQuery.refetch();
+      void statsQuery.refetch();
+    },
+    updateUser: async (id: string, payload: UpdateUserPayload) =>
+      updateUserMutation.mutateAsync({ id, payload }),
+    deleteUser: async (id: string) => deleteUserMutation.mutateAsync(id),
+    inviteUser: async (payload: InviteUserPayload) => inviteUserMutation.mutateAsync(payload),
   };
 }
