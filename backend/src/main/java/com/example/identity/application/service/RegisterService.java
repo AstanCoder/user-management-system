@@ -33,7 +33,7 @@ public final class RegisterService implements RegisterUseCase {
         if (userAuthRepository.existsByEmail(command.getEmail())) {
             throw new UserAlreadyExistsException(command.getEmail());
         }
-        Role role = command.getRole() != null ? command.getRole() : Role.VIEWER;
+        Role role = Role.VIEWER;
         String hash = passwordHasher.hash(command.getPassword());
         User user = User.create(
                 UserId.generate(),

@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-fix-bucket4j-rate-limit-state-nullability
+      author: security-hardening
+      changes:
+        - dropNotNullConstraint:
+            tableName: auth_rate_limit_bucket
+            columnName: state
+            columnDataType: bytea
+      rollback:
+        - addNotNullConstraint:
+            tableName: auth_rate_limit_bucket
+            columnName: state
+            columnDataType: bytea

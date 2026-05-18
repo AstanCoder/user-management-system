@@ -36,6 +36,8 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.17.0")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
     implementation("io.minio:minio:8.5.17")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.17.0")
+    implementation("com.bucket4j:bucket4j_jdk17-postgresql:8.17.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")

@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-harden-auth-tokens-and-rate-limit
+      author: security-hardening
+      changes:
+        - addColumn:
+            tableName: invitation_tokens
+            columns:
+              - column:
+                  name: expires_at
+                  type: timestamptz
+        - update:
+            tableName: invitation_tokens
+            columns:
+              - column:
+                  name: expires_at
+                  valueComputed: "created_at + interval '24 hour'"
+            where: "expires_at IS NULL"
+        - addNotNullConstraint:
+            tableName: invitation_tokens
+            columnName: expires_at
+            columnDataType: timestamptz
+        - createTable:
+            tableName: auth_rate_limit_bucket
+            columns:
+              - column:
+                  name: id
+                  type: varchar(191)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: state
+                  type: bytea
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: bigint
+      rollback:
+        - dropTable:
+            tableName: auth_rate_limit_bucket
+        - dropNotNullConstraint:
+            tableName: invitation_tokens
+            columnName: expires_at
+            columnDataType: timestamptz
+        - dropColumn:
+            tableName: invitation_tokens
+            columnName: expires_at

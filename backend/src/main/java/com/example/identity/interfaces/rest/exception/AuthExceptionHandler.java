@@ -1,6 +1,7 @@
 package com.example.identity.interfaces.rest.exception;
 
 import com.example.contact.interfaces.rest.dto.ErrorResponse;
+import com.example.identity.application.exception.RateLimitExceededException;
 import com.example.identity.domain.exception.AuthUserNotFoundException;
 import com.example.identity.domain.exception.InvalidCredentialsException;
 import com.example.identity.domain.exception.InvalidInvitationTokenException;
@@ -28,6 +29,11 @@ public class AuthExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> userExists(UserAlreadyExistsException ex, HttpServletRequest request) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> rateLimited(RateLimitExceededException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
     }
 
     @ExceptionHandler({

@@ -8,6 +8,8 @@ import com.example.identity.application.port.in.LoginUseCase;
 import com.example.identity.application.port.in.CompleteInvitationUseCase;
 import com.example.identity.application.port.in.RegisterUseCase;
 import com.example.identity.application.port.in.ResetPasswordUseCase;
+import com.example.identity.application.port.out.AuthRateLimiter;
+import com.example.identity.domain.exception.InvalidCredentialsException;
 import com.example.identity.interfaces.rest.dto.AuthResponse;
 import com.example.identity.interfaces.rest.dto.CompleteInvitationRequest;
 import com.example.identity.interfaces.rest.dto.CurrentUserResponse;
@@ -18,6 +20,7 @@ import com.example.identity.interfaces.rest.dto.ResetPasswordRequest;
 import com.example.identity.interfaces.rest.mapper.AuthRestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +46,7 @@ public class AuthController {
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final ForgotPasswordUseCase forgotPasswordUseCase;
     private final ResetPasswordUseCase resetPasswordUseCase;
+    private final AuthRateLimiter authRateLimiter;
     private final AuthRestMapper mapper;
 
     public AuthController(
@@ -52,6 +56,7 @@ public class AuthController {
             GetCurrentUserUseCase getCurrentUserUseCase,
             ForgotPasswordUseCase forgotPasswordUseCase,
             ResetPasswordUseCase resetPasswordUseCase,
+            AuthRateLimiter authRateLimiter,
             AuthRestMapper mapper) {
         this.loginUseCase = loginUseCase;
         this.completeInvitationUseCase = completeInvitationUseCase;
@@ -59,6 +64,7 @@ public class AuthController {
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.forgotPasswordUseCase = forgotPasswordUseCase;
         this.resetPasswordUseCase = resetPasswordUseCase;
+        this.authRateLimiter = authRateLimiter;
         this.mapper = mapper;
     }
 
@@ -70,9 +76,16 @@ public class AuthController {
      */
     @Operation(summary = "Login")
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        AuthResult result = loginUseCase.execute(mapper.toCommand(request));
-        return mapper.toResponse(result);
+    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String clientIp = resolveClientIp(httpRequest);
+        authRateLimiter.checkLoginAllowed(clientIp, request.getEmail());
+        try {
+            AuthResult result = loginUseCase.execute(mapper.toCommand(request));
+            return mapper.toResponse(result);
+        } catch (InvalidCredentialsException exception) {
+            authRateLimiter.onLoginFailure(clientIp, request.getEmail());
+            throw exception;
+        }
     }
 
     /**
@@ -121,7 +134,9 @@ public class AuthController {
      */
     @Operation(summary = "Forgot password")
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<Void> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        authRateLimiter.checkForgotPasswordAllowed(resolveClientIp(httpRequest), request.getEmail());
         forgotPasswordUseCase.execute(request.getEmail());
         return ResponseEntity.accepted().build();
     }
@@ -148,5 +163,13 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         return ResponseEntity.noContent().build();
+    }
+
+    private String resolveClientIp(HttpServletRequest httpRequest) {
+        String forwardedFor = httpRequest.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return httpRequest.getRemoteAddr();
     }
 }

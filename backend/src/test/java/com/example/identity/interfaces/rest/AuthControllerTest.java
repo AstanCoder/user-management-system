@@ -9,12 +9,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.identity.application.command.AuthResult;
 import com.example.identity.application.command.CurrentUserResult;
+import com.example.identity.application.exception.RateLimitExceededException;
 import com.example.identity.application.port.in.CompleteInvitationUseCase;
 import com.example.identity.application.port.in.ForgotPasswordUseCase;
 import com.example.identity.application.port.in.GetCurrentUserUseCase;
 import com.example.identity.application.port.in.LoginUseCase;
 import com.example.identity.application.port.in.RegisterUseCase;
 import com.example.identity.application.port.in.ResetPasswordUseCase;
+import com.example.identity.application.port.out.AuthRateLimiter;
 import com.example.identity.config.AuthTestSecurityConfig;
 import com.example.identity.domain.exception.InvalidCredentialsException;
 import com.example.identity.domain.exception.InvalidInvitationTokenException;
@@ -29,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -73,6 +76,9 @@ class AuthControllerTest {
     @MockBean
     private ResetPasswordUseCase resetPasswordUseCase;
 
+    @MockBean
+    private AuthRateLimiter authRateLimiter;
+
     @Test
     void login_validCredentials_returns200() throws Exception {
         UserId userId = UserId.of(UUID.randomUUID().toString());
@@ -106,6 +112,20 @@ class AuthControllerTest {
                                 "email", "admin@nexuscrm.com",
                                 "password", "wrong"))))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void login_rateLimited_returns429() throws Exception {
+        Mockito.doThrow(new RateLimitExceededException("Too many login attempts"))
+                .when(authRateLimiter)
+                .checkLoginAllowed(any(), any());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "admin@nexuscrm.com",
+                                "password", "Admin123!"))))
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test

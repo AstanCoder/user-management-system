@@ -32,4 +32,6 @@ public interface PasswordResetTokenRepository {
      * @param token token value
      */
     void markUsed(String token);
+
+    void deleteExpiredUnused(Instant now);
 }

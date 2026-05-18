@@ -34,6 +34,9 @@ public class InvitationTokenJpaEntity {
     @Column(name = "token", nullable = false, length = 255)
     private String token;
 
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
     @Column(name = "used_at")
     private Instant usedAt;
 

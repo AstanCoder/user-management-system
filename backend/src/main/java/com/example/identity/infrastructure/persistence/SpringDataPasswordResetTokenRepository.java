@@ -1,5 +1,7 @@
 package com.example.identity.infrastructure.persistence;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,5 +18,7 @@ public interface SpringDataPasswordResetTokenRepository
      * @param token token string
      * @return optional entity
      */
-    Optional<PasswordResetTokenJpaEntity> findByToken(String token);
+    Optional<PasswordResetTokenJpaEntity> findFirstByTokenIn(Collection<String> tokens);
+
+    void deleteByUsedAtIsNullAndExpiresAtBefore(Instant now);
 }

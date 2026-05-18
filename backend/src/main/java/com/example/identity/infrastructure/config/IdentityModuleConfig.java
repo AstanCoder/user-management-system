@@ -60,8 +60,10 @@ public class IdentityModuleConfig {
             UserAuthRepository userAuthRepository,
             PasswordResetTokenRepository resetTokenRepository,
             EmailSender emailSender,
-            @Value("${app.mail.from:noreply@nexuscrm.com}") String mailFrom) {
-        return new ForgotPasswordService(userAuthRepository, resetTokenRepository, emailSender, mailFrom);
+            @Value("${app.mail.from:noreply@nexuscrm.com}") String mailFrom,
+            @Value("${app.identity.password-reset-token-expiration-minutes:30}") long resetTokenExpirationMinutes) {
+        return new ForgotPasswordService(
+                userAuthRepository, resetTokenRepository, emailSender, mailFrom, resetTokenExpirationMinutes);
     }
 
     @Bean

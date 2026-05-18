@@ -18,16 +18,19 @@ public final class ForgotPasswordService implements ForgotPasswordUseCase {
     private final PasswordResetTokenRepository resetTokenRepository;
     private final EmailSender emailSender;
     private final String mailFrom;
+    private final long resetTokenExpirationMinutes;
 
     public ForgotPasswordService(
             UserAuthRepository userAuthRepository,
             PasswordResetTokenRepository resetTokenRepository,
             EmailSender emailSender,
-            String mailFrom) {
+            String mailFrom,
+            long resetTokenExpirationMinutes) {
         this.userAuthRepository = userAuthRepository;
         this.resetTokenRepository = resetTokenRepository;
         this.emailSender = emailSender;
         this.mailFrom = mailFrom;
+        this.resetTokenExpirationMinutes = resetTokenExpirationMinutes;
     }
 
     @Override
@@ -37,7 +40,7 @@ public final class ForgotPasswordService implements ForgotPasswordUseCase {
 
     private void sendResetEmail(AuthUser user) {
         String token = UUID.randomUUID().toString();
-        Instant expiresAt = Instant.now().plus(24, ChronoUnit.HOURS);
+        Instant expiresAt = Instant.now().plus(resetTokenExpirationMinutes, ChronoUnit.MINUTES);
         resetTokenRepository.save(user.id(), token, expiresAt);
         String subject = "Nexus CRM password reset";
         String body = "Hello,\n\nUse this token to reset your password: " + token + "\n\n— Nexus CRM";

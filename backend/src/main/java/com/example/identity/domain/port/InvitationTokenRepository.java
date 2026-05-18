@@ -1,6 +1,7 @@
 package com.example.identity.domain.port;
 
 import com.example.user.domain.model.UserId;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -30,4 +31,6 @@ public interface InvitationTokenRepository {
      * @param token token value
      */
     void markUsed(String token);
+
+    void deleteExpiredUnused(Instant now);
 }

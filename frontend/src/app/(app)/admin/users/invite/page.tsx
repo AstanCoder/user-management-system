@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
 import { userDependencies } from '@/user/infrastructure/config/userDependencies';
 import { UserRole } from '@/user/domain/port/UserAdminGateway';
+import { userQueryKeys } from '@/user/interfaces/query/userQueryKeys';
 import { Button } from '@/shared/ui/Button';
 
 const ROLE_OPTIONS: { value: UserRole; label: string; description: string }[] = [
@@ -38,6 +39,7 @@ interface InviteFormData {
 export default function InviteUserPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { register, watch, setValue, handleSubmit, formState } = useForm<InviteFormData>({
     defaultValues: {
       firstName: '',
@@ -55,7 +57,8 @@ export default function InviteUserPage() {
         lastName: form.lastName.trim(),
         role: form.role,
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: userQueryKeys.all });
       router.push('/admin/users');
     },
   });
@@ -70,9 +73,7 @@ export default function InviteUserPage() {
   const submit = async (data: InviteFormData) => {
     try {
       await inviteMutation.mutateAsync(data);
-    } catch {
-      // handled by mutation.error rendering
-    }
+    } catch {}
   };
 
   const errorMessage =

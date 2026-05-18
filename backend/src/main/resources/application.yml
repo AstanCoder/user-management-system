@@ -36,6 +36,18 @@ app:
   jwt:
     secret: ${JWT_SECRET:nexus-crm-dev-secret-key-min-32-chars!!}
     expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+  identity:
+    password-reset-token-expiration-minutes: ${APP_IDENTITY_PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES:30}
+    invitation-token-expiration-hours: ${APP_IDENTITY_INVITATION_TOKEN_EXPIRATION_HOURS:24}
+    token-cleanup-cron: ${APP_IDENTITY_TOKEN_CLEANUP_CRON:0 */30 * * * *}
+  security:
+    token-hash-secret: ${APP_SECURITY_TOKEN_HASH_SECRET:${JWT_SECRET:nexus-crm-dev-secret-key-min-32-chars!!}}
+    rate-limit:
+      login:
+        capacity-per-minute: ${APP_SECURITY_RATE_LIMIT_LOGIN_CAPACITY_PER_MINUTE:20}
+        failure-capacity-per-15-minutes: ${APP_SECURITY_RATE_LIMIT_LOGIN_FAILURE_CAPACITY_PER_15_MINUTES:10}
+      forgot-password:
+        capacity-per-hour: ${APP_SECURITY_RATE_LIMIT_FORGOT_PASSWORD_CAPACITY_PER_HOUR:8}
   mail:
     from: ${APP_MAIL_FROM:noreply@nexuscrm.com}
   avatar:
