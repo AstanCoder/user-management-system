@@ -116,15 +116,10 @@ export default function AdminUsersPage() {
           <StatCard
             label="Total Users"
             value={stats.totalUsers}
-            subtitle={`+${stats.usersCreatedLast7Days} this week`}
+            subtitle={`+${stats.usersCreatedLast7Days} this week · ${stats.invitedPendingCount} Pending`}
             icon={Users}
           />
-          <StatCard
-            label="Active Admins"
-            value={stats.adminCount}
-            subtitle={`${stats.invitedPendingCount} Pending`}
-            icon={Shield}
-          />
+          <StatCard label="Active Admins" value={stats.adminCount} icon={Shield} />
           <StatCard label="System Editors" value={stats.editorCount} icon={PenLine} />
         </div>
       )}

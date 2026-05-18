@@ -92,6 +92,13 @@ describe('AdminUsersPage', () => {
     expect(screen.getByText('Invite User')).toBeInTheDocument();
   });
 
+  it('shows pending count in total users card only', async () => {
+    render(<AdminUsersPage />);
+    await screen.findByText('User Management');
+    expect(screen.getByText('+1 this week · 0 Pending')).toBeInTheDocument();
+    expect(screen.queryByText('0 Pending')).not.toBeInTheDocument();
+  });
+
   it('shows role change via dropdown menu', async () => {
     render(<AdminUsersPage />);
     await screen.findByText('Jane Doe');
