@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, ReactNode, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -13,7 +13,6 @@ import {
   Building2,
   MapPin,
   ChevronDown,
-  Trash2,
 } from 'lucide-react';
 import { useContactDetail } from '@/contact/interfaces/hooks/useContactDetail';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
@@ -21,7 +20,6 @@ import { Avatar } from '@/shared/ui/Avatar';
 import { Button } from '@/shared/ui/Button';
 import { Chip } from '@/shared/ui/Chip';
 import { ActivityTimeline } from '@/shared/ui/ActivityTimeline';
-import { formatRelativeTime } from '@/shared/lib/relativeTime';
 
 type DetailTab = 'activity' | 'company';
 
@@ -70,8 +68,6 @@ export default function ContactDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const { user } = useAuth();
-  const { contact, loading, error, addNote, deleteNote, addActivity, confirmActivity, deleteActivity } =
-    useContactDetail(id);
   const [logText, setLogText] = useState('');
   const [logType, setLogType] = useState('NOTE');
   const [tab, setTab] = useState<DetailTab>('activity');
@@ -79,19 +75,46 @@ export default function ContactDetailPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [savingLog, setSavingLog] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const {
+    contact,
+    activities,
+    hasMoreActivities,
+    loadingMoreActivities,
+    loadMoreActivities,
+    loading,
+    error,
+    addActivity,
+    confirmActivity,
+    deleteActivity,
+  } = useContactDetail(id, activityFilter);
 
   const canEdit = user?.role === 'ADMIN' || user?.role === 'EDITOR';
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting && hasMoreActivities && !loadingMoreActivities) {
+          void loadMoreActivities();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreActivities, loadMoreActivities, loadingMoreActivities]);
 
   const handleAddLog = async (e: FormEvent) => {
     e.preventDefault();
     if (!logText.trim()) return;
     setSavingLog(true);
     try {
-      if (logType === 'NOTE') {
-        await addNote(logText.trim());
-      } else {
-        await addActivity(logType, logText.trim(), !(logType === 'CALL' || logType === 'EMAIL'));
-      }
+      await addActivity(logType, logText.trim(), !(logType === 'CALL' || logType === 'EMAIL'));
       setLogText('');
     } finally {
       setSavingLog(false);
@@ -265,51 +288,15 @@ export default function ContactDetailPage() {
                     </div>
                   </div>
                   <ActivityTimeline
-                    activities={contact.activities}
-                    filter={activityFilter || undefined}
+                    activities={activities}
                     canManage={canEdit}
                     onConfirm={confirmActivity}
                     onDelete={deleteActivity}
                   />
-                  <div className="mt-6 border-t border-outline-variant pt-5">
-                    <h3 className="mb-3 text-sm font-semibold text-on-surface">Notes</h3>
-                    {contact.notes.length === 0 ? (
-                      <p className="text-sm text-on-surface-variant">No notes yet.</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {[...contact.notes]
-                          .sort(
-                            (a, b) =>
-                              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-                          )
-                          .map((item) => (
-                            <li
-                              key={item.id}
-                              className="rounded-xl border border-outline-variant bg-surface-container-low p-4"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-xs text-on-surface-variant">
-                                    {formatRelativeTime(item.createdAt)}
-                                  </p>
-                                  <p className="mt-1 text-sm text-on-surface">{item.body}</p>
-                                </div>
-                                {canEdit && (
-                                  <button
-                                    type="button"
-                                    onClick={() => void deleteNote(item.id)}
-                                    className="rounded-md border border-outline-variant p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container"
-                                    aria-label="Delete note"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                  </div>
+                  <div ref={loadMoreRef} className="h-6" />
+                  {loadingMoreActivities && (
+                    <p className="mt-2 text-center text-xs text-on-surface-variant">Loading more activities...</p>
+                  )}
                 </>
               )}
 

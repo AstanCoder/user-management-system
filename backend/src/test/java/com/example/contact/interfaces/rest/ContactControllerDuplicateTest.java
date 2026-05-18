@@ -11,10 +11,12 @@ import com.example.contact.application.port.in.GetContactUseCase;
 import com.example.contact.application.port.in.ListContactsUseCase;
 import com.example.contact.application.port.in.UpdateContactUseCase;
 import com.example.contact.application.port.in.UploadAvatarUseCase;
+import com.example.contact.application.port.out.ResolveAvatarUrlPort;
 import com.example.shared.test.WebMvcTestSecurityConfig;
 import com.example.contact.domain.exception.DuplicateEmailException;
 import com.example.contact.domain.valueobject.Email;
 import com.example.contact.interfaces.rest.exception.ContactExceptionHandler;
+import com.example.contact.interfaces.rest.mapper.AvatarUrlRestMapper;
 import com.example.contact.interfaces.rest.mapper.ContactRestMapperImpl;
 import com.example.contact.shared.mapper.DomainTypeMapper;
 import com.example.identity.infrastructure.config.SecurityConfig;
@@ -38,7 +40,13 @@ import org.springframework.test.web.servlet.MockMvc;
                 @ComponentScan.Filter(
                         type = FilterType.ASSIGNABLE_TYPE,
                         classes = {JwtAuthenticationFilter.class, SecurityConfig.class}))
-@Import({ContactExceptionHandler.class, ContactRestMapperImpl.class, DomainTypeMapper.class, WebMvcTestSecurityConfig.class})
+@Import({
+    ContactExceptionHandler.class,
+    AvatarUrlRestMapper.class,
+    ContactRestMapperImpl.class,
+    DomainTypeMapper.class,
+    WebMvcTestSecurityConfig.class
+})
 class ContactControllerDuplicateTest {
 
     @Autowired
@@ -64,6 +72,9 @@ class ContactControllerDuplicateTest {
 
     @MockBean
     private UploadAvatarUseCase uploadAvatarUseCase;
+
+    @MockBean
+    private ResolveAvatarUrlPort resolveAvatarUrlPort;
 
     @Test
     @WithMockUser(roles = "EDITOR")

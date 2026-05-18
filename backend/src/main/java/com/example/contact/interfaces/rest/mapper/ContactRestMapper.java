@@ -11,6 +11,7 @@ import com.example.contact.interfaces.rest.dto.ContactResponse;
 import com.example.contact.interfaces.rest.dto.CreateContactRequest;
 import com.example.contact.interfaces.rest.dto.UpdateContactRequest;
 import com.example.contact.shared.mapper.DomainTypeMapper;
+import java.util.List;
 import java.util.UUID;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -18,7 +19,7 @@ import org.mapstruct.Mapping;
 /**
  * Maps between REST DTOs and application commands/results using MapStruct.
  */
-@Mapper(componentModel = "spring", uses = DomainTypeMapper.class)
+@Mapper(componentModel = "spring", uses = {DomainTypeMapper.class, AvatarUrlRestMapper.class})
 public interface ContactRestMapper {
 
     @Mapping(target = "status", expression = "java(parseStatus(request.getStatus()))")
@@ -31,13 +32,18 @@ public interface ContactRestMapper {
     UpdateContactCommand toUpdateCommand(String id, UpdateContactRequest request);
 
     @Mapping(target = "id", source = "id", qualifiedByName = "contactIdToString")
+    @Mapping(target = "avatarUrl", source = "avatarUrl", qualifiedByName = "resolveAvatarUrl")
     ContactResponse toResponse(ContactResult result);
 
     ContactPageResponse toPageResponse(ContactPageResult result);
 
-    default ContactSearchQuery toSearchQuery(String search, int page, int size, String sort) {
+    default ContactSearchQuery toSearchQuery(
+            String search, String email, String phone, List<String> tagNames, int page, int size, String sort) {
         return ContactSearchQuery.builder()
                 .search(search)
+                .email(email)
+                .phone(phone)
+                .tagNames(tagNames)
                 .page(page)
                 .size(size)
                 .sort(sort)

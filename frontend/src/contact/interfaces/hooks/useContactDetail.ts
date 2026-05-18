@@ -1,11 +1,13 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { ContactViewModelMapper } from '../../application/mapper/ContactViewModelMapper';
 import { contactDependencies } from '../../infrastructure/config/contactDependencies';
 import { contactQueryKeys } from '../query/contactQueryKeys';
+import type { ActivityViewModel } from '../../application/command/ContactViewModel';
 
-export function useContactDetail(contactId: string) {
+export function useContactDetail(contactId: string, activityType = '') {
   const queryClient = useQueryClient();
 
   const detailQuery = useQuery({
@@ -14,6 +16,23 @@ export function useContactDetail(contactId: string) {
     queryFn: async () => {
       const dto = await contactDependencies.contactGateway.getById(contactId);
       return ContactViewModelMapper.fromApi(dto);
+    },
+  });
+
+  const activitiesQuery = useInfiniteQuery({
+    queryKey: contactQueryKeys.activities(contactId, activityType),
+    enabled: Boolean(contactId),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      return contactDependencies.contactGateway.listActivities(contactId, {
+        page: pageParam,
+        size: 10,
+        activityType: activityType || undefined,
+      });
+    },
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.page + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
     },
   });
 
@@ -44,21 +63,30 @@ export function useContactDetail(contactId: string) {
         confirmed: payload.confirmed,
       });
     },
-    onSuccess: invalidateDetail,
+    onSuccess: async () => {
+      await invalidateDetail();
+      await queryClient.invalidateQueries({ queryKey: contactQueryKeys.activities(contactId, activityType) });
+    },
   });
 
   const confirmActivityMutation = useMutation({
     mutationFn: async (activityId: string) => {
       await contactDependencies.contactGateway.confirmActivity(contactId, activityId);
     },
-    onSuccess: invalidateDetail,
+    onSuccess: async () => {
+      await invalidateDetail();
+      await queryClient.invalidateQueries({ queryKey: contactQueryKeys.activities(contactId, activityType) });
+    },
   });
 
   const deleteActivityMutation = useMutation({
     mutationFn: async (activityId: string) => {
       await contactDependencies.contactGateway.deleteActivity(contactId, activityId);
     },
-    onSuccess: invalidateDetail,
+    onSuccess: async () => {
+      await invalidateDetail();
+      await queryClient.invalidateQueries({ queryKey: contactQueryKeys.activities(contactId, activityType) });
+    },
   });
 
   const assignTagsMutation = useMutation({
@@ -81,6 +109,26 @@ export function useContactDetail(contactId: string) {
 
   return {
     contact: detailQuery.data ?? null,
+    activities: activitiesQuery.data?.pages.flatMap((page) =>
+      page.content.map(
+        (activity): ActivityViewModel => ({
+          id: activity.id,
+          activityType: activity.activityType,
+          description: activity.description,
+          authorUserId: activity.authorUserId,
+          occurredAt: activity.occurredAt,
+          createdAt: activity.createdAt,
+          confirmed: activity.confirmed,
+        }),
+      ),
+    ) ?? [],
+    hasMoreActivities: activitiesQuery.hasNextPage,
+    loadingMoreActivities: activitiesQuery.isFetchingNextPage,
+    loadMoreActivities: async () => {
+      if (activitiesQuery.hasNextPage) {
+        await activitiesQuery.fetchNextPage();
+      }
+    },
     loading: detailQuery.isPending,
     error: detailQuery.error instanceof Error ? detailQuery.error.message : null,
     refetch: () => {

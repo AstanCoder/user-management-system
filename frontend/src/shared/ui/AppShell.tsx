@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
+import { ContactRound, Shield } from 'lucide-react';
 import { clearStoredAuth, StoredAuth } from '@/shared/lib/authStorage';
 import { Avatar } from './Avatar';
 import { PageFooter } from './PageFooter';
@@ -13,8 +14,8 @@ export interface AppShellProps {
 }
 
 const navItems = [
-  { href: '/contacts', label: 'Contacts', icon: 'contact_page', adminOnly: false },
-  { href: '/admin/users', label: 'Admin Panel', icon: 'security', adminOnly: true },
+  { href: '/contacts', label: 'Contacts', icon: ContactRound, adminOnly: false },
+  { href: '/admin/users', label: 'Admin Panel', icon: Shield, adminOnly: true },
 ];
 
 const bottomNavItems = [
@@ -69,6 +70,7 @@ export function AppShell({ user, children }: AppShellProps) {
         <nav className="flex-1 space-y-1 p-4">
           {visibleNav.map((item) => {
             const active = pathname.startsWith(item.href);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
@@ -79,7 +81,7 @@ export function AppShell({ user, children }: AppShellProps) {
                     : 'text-on-surface-variant hover:bg-surface-container-low'
                 }`}
               >
-                <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                <Icon className="h-5 w-5" />
                 {item.label}
               </Link>
             );
@@ -99,7 +101,7 @@ export function AppShell({ user, children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-outline-variant bg-surface px-4 py-3 lg:px-10">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">contacts</span>
+            <ContactRound className="h-5 w-5 text-primary" />
             <span className="text-lg font-semibold text-primary">Nexus CRM</span>
           </div>
           <div className="flex items-center gap-3 lg:hidden">

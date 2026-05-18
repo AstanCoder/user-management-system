@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.contact.application.command.ActivityPageResult;
 import com.example.contact.application.command.ActivityResult;
 import com.example.contact.application.command.TagResult;
 import com.example.contact.application.port.in.AddNoteUseCase;
@@ -82,6 +84,37 @@ class ContactInteractionControllersTest {
 
     @MockBean
     private AssignTagsUseCase assignTagsUseCase;
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void listActivities_withPagingAndFilter_returnsPage() throws Exception {
+        String contactId = "fcd23632-d13c-45ab-8d1e-a2fbfd207ef6";
+        when(listActivitiesUseCase.search(any(), any()))
+                .thenReturn(ActivityPageResult.builder()
+                        .content(List.of(ActivityResult.builder()
+                                .id(UUID.randomUUID().toString())
+                                .activityType("EMAIL")
+                                .description("Email sent")
+                                .authorUserId(UUID.randomUUID())
+                                .occurredAt(Instant.now())
+                                .createdAt(Instant.now())
+                                .confirmed(true)
+                                .build()))
+                        .totalElements(1)
+                        .totalPages(1)
+                        .page(0)
+                        .size(10)
+                        .build());
+
+        mockMvc.perform(get("/api/contacts/{contactId}/activities", contactId)
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("activityType", "EMAIL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].activityType").value("EMAIL"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.size").value(10));
+    }
 
     @Test
     @WithMockUser(roles = "ADMIN")

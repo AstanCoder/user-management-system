@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Mail, Building2, Plus, Search } from 'lucide-react';
+import { Mail, Building2, Plus, Search, Filter } from 'lucide-react';
 import { useContactDirectory } from '@/contact/interfaces/hooks/useContactDirectory';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
 import { Avatar } from '@/shared/ui/Avatar';
@@ -20,8 +20,18 @@ export default function ContactsDirectoryPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [emailFilter, setEmailFilter] = useState('');
+  const [phoneFilter, setPhoneFilter] = useState('');
+  const [tagFilters, setTagFilters] = useState<string[]>([]);
+  const [draftEmailFilter, setDraftEmailFilter] = useState('');
+  const [draftPhoneFilter, setDraftPhoneFilter] = useState('');
+  const [draftTagFiltersText, setDraftTagFiltersText] = useState('');
   const { items, loading, error, totalElements, totalPages, deleteContact } = useContactDirectory({
     search,
+    email: emailFilter,
+    phone: phoneFilter,
+    tagNames: tagFilters,
     page,
     size: PAGE_SIZE,
   });
@@ -37,6 +47,34 @@ export default function ContactsDirectoryPage() {
     }
   }
 
+  const activeFiltersCount =
+    (emailFilter ? 1 : 0) + (phoneFilter ? 1 : 0) + (tagFilters.length > 0 ? 1 : 0);
+
+  const applyAdvancedFilters = () => {
+    setEmailFilter(draftEmailFilter.trim());
+    setPhoneFilter(draftPhoneFilter.trim());
+    setTagFilters(
+      draftTagFiltersText
+        .split(',')
+        .map((tagName) => tagName.trim())
+        .filter(Boolean),
+    );
+    setPage(0);
+    setFiltersOpen(false);
+  };
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setEmailFilter('');
+    setPhoneFilter('');
+    setTagFilters([]);
+    setDraftEmailFilter('');
+    setDraftPhoneFilter('');
+    setDraftTagFiltersText('');
+    setPage(0);
+    setFiltersOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -47,11 +85,15 @@ export default function ContactsDirectoryPage() {
           </p>
         </div>
         <div className="flex gap-3">
+          <Button variant="secondary" className="flex items-center gap-1.5" onClick={() => setFiltersOpen((v) => !v)}>
+            <Filter className="h-4 w-4" />
+            Advanced Filters{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+          </Button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
             <input
               type="search"
-              placeholder="Search contacts…"
+              placeholder="Search contacts or phone…"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -71,6 +113,46 @@ export default function ContactsDirectoryPage() {
         </div>
       </div>
 
+      {filtersOpen && (
+        <div className="rounded-xl bg-surface-container-lowest p-4 shadow-sm ring-1 ring-outline-variant">
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="text-sm text-on-surface-variant">
+              Email
+              <input
+                value={draftEmailFilter}
+                onChange={(e) => setDraftEmailFilter(e.target.value)}
+                placeholder="Contains email"
+                className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </label>
+            <label className="text-sm text-on-surface-variant">
+              Phone
+              <input
+                value={draftPhoneFilter}
+                onChange={(e) => setDraftPhoneFilter(e.target.value)}
+                placeholder="Contains phone"
+                className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </label>
+            <label className="text-sm text-on-surface-variant">
+              Segmentation Tags
+              <input
+                value={draftTagFiltersText}
+                onChange={(e) => setDraftTagFiltersText(e.target.value)}
+                placeholder="typescript, sales"
+                className="mt-1 h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </label>
+          </div>
+          <div className="mt-3 flex justify-end gap-2">
+            <Button variant="secondary" onClick={clearAllFilters}>
+              Clear
+            </Button>
+            <Button onClick={applyAdvancedFilters}>Apply</Button>
+          </div>
+        </div>
+      )}
+
       {loading && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -88,8 +170,8 @@ export default function ContactsDirectoryPage() {
           <p className="text-base font-medium">No contacts found.</p>
           {search && (
             <p className="mt-1 text-sm">
-              Try adjusting your search, or{' '}
-              <button className="underline hover:text-on-surface" onClick={() => setSearch('')}>
+              Try adjusting your filters, or{' '}
+              <button className="underline hover:text-on-surface" onClick={clearAllFilters}>
                 clear filters
               </button>
               .

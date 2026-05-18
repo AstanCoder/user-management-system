@@ -2,10 +2,14 @@ package com.example.contact.infrastructure.persistence;
 
 import com.example.contact.domain.model.Activity;
 import com.example.contact.domain.port.ActivityRepository;
+import com.example.contact.domain.query.ActivityListCriteria;
+import com.example.contact.domain.query.PagedActivities;
 import com.example.contact.domain.valueobject.ActivityId;
 import com.example.contact.domain.valueobject.ContactId;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,6 +26,26 @@ public class JpaActivityRepositoryAdapter implements ActivityRepository {
         return repository.findByContactIdOrderByOccurredAtDesc(contactId.value()).stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public PagedActivities search(ContactId contactId, ActivityListCriteria criteria) {
+        PageRequest pageRequest = PageRequest.of(criteria.getPage(), criteria.getSize());
+        String activityType = criteria.getActivityType();
+        Page<ActivityJpaEntity> page;
+        if (activityType == null || activityType.isBlank()) {
+            page = repository.findByContactIdOrderByOccurredAtDesc(contactId.value(), pageRequest);
+        } else {
+            page = repository.findByContactIdAndActivityTypeIgnoreCaseOrderByOccurredAtDesc(
+                    contactId.value(), activityType.trim(), pageRequest);
+        }
+        return PagedActivities.builder()
+                .content(page.getContent().stream().map(this::toDomain).toList())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .build();
     }
 
     @Override

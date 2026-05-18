@@ -61,6 +61,14 @@ export interface ContactPageApiDto {
   size: number;
 }
 
+export interface ActivityPageApiDto {
+  content: ActivityApiDto[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
 export interface CreateContactApiDto {
   firstName: string;
   lastName: string;

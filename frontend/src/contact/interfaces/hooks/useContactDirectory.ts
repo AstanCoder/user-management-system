@@ -10,6 +10,9 @@ import { contactQueryKeys } from '../query/contactQueryKeys';
 
 export interface UseContactDirectoryOptions {
   search?: string;
+  email?: string;
+  phone?: string;
+  tagNames?: string[];
   page?: number;
   size?: number;
 }
@@ -27,11 +30,17 @@ export interface UseContactDirectoryResult {
 }
 
 export function useContactDirectory(options: UseContactDirectoryOptions = {}): UseContactDirectoryResult {
-  const { search, size = 20 } = options;
+  const { search, email, phone, tagNames, size = 20 } = options;
   const [page, setPage] = useState(options.page ?? 0);
   const queryClient = useQueryClient();
 
   const normalizedSearch = useMemo(() => (search ?? '').trim(), [search]);
+  const normalizedEmail = useMemo(() => (email ?? '').trim(), [email]);
+  const normalizedPhone = useMemo(() => (phone ?? '').trim(), [phone]);
+  const normalizedTagNames = useMemo(
+    () => (tagNames ?? []).map((tagName) => tagName.trim()).filter(Boolean),
+    [tagNames],
+  );
   const [debouncedSearch, setDebouncedSearch] = useState(normalizedSearch);
 
   useEffect(() => {
@@ -40,10 +49,20 @@ export function useContactDirectory(options: UseContactDirectoryOptions = {}): U
   }, [normalizedSearch]);
 
   const directoryQuery = useQuery({
-    queryKey: contactQueryKeys.directory(debouncedSearch, page, size),
+    queryKey: contactQueryKeys.directory(
+      debouncedSearch,
+      page,
+      size,
+      normalizedEmail,
+      normalizedPhone,
+      normalizedTagNames,
+    ),
     queryFn: async () =>
       contactDependencies.contactGateway.listPaged({
         search: debouncedSearch || undefined,
+        email: normalizedEmail || undefined,
+        phone: normalizedPhone || undefined,
+        tagNames: normalizedTagNames.length > 0 ? normalizedTagNames : undefined,
         page,
         size,
       }),

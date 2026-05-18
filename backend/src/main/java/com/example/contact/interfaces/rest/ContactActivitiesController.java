@@ -1,18 +1,20 @@
 package com.example.contact.interfaces.rest;
 
+import com.example.contact.application.command.ActivityPageResult;
 import com.example.contact.application.command.ActivityResult;
+import com.example.contact.application.command.ActivitySearchQuery;
 import com.example.contact.application.port.in.ConfirmActivityUseCase;
 import com.example.contact.application.port.in.DeleteActivityUseCase;
 import com.example.contact.application.port.in.ListActivitiesUseCase;
 import com.example.contact.application.port.in.LogActivityUseCase;
 import com.example.contact.domain.valueobject.ActivityId;
 import com.example.contact.domain.valueobject.ContactId;
+import com.example.contact.interfaces.rest.dto.ActivityPageResponse;
 import com.example.contact.interfaces.rest.dto.ActivityResponse;
 import com.example.contact.interfaces.rest.dto.LogActivityRequest;
 import com.example.identity.interfaces.rest.SecurityContextAccessor;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Contact Activities")
@@ -49,10 +52,25 @@ public class ContactActivitiesController {
     }
 
     @GetMapping
-    public List<ActivityResponse> list(@PathVariable String contactId) {
-        return listActivitiesUseCase.execute(ContactId.of(contactId)).stream()
-                .map(this::toResponse)
-                .toList();
+    public ActivityPageResponse list(
+            @PathVariable String contactId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String activityType) {
+        ActivityPageResult result = listActivitiesUseCase.search(
+                ContactId.of(contactId),
+                ActivitySearchQuery.builder()
+                        .activityType(activityType)
+                        .page(page)
+                        .size(size)
+                        .build());
+        return ActivityPageResponse.builder()
+                .content(result.getContent().stream().map(this::toResponse).toList())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getPage())
+                .size(result.getSize())
+                .build();
     }
 
     @PostMapping

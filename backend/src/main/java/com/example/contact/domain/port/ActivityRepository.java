@@ -1,6 +1,8 @@
 package com.example.contact.domain.port;
 
 import com.example.contact.domain.model.Activity;
+import com.example.contact.domain.query.ActivityListCriteria;
+import com.example.contact.domain.query.PagedActivities;
 import com.example.contact.domain.valueobject.ActivityId;
 import com.example.contact.domain.valueobject.ContactId;
 import java.util.List;
@@ -18,6 +20,8 @@ public interface ActivityRepository {
      * @return activities
      */
     List<Activity> findByContactId(ContactId contactId);
+
+    PagedActivities search(ContactId contactId, ActivityListCriteria criteria);
 
     Optional<Activity> findById(ActivityId activityId);
 

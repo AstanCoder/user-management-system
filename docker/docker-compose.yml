@@ -21,6 +21,45 @@ services:
       - "${MAILHOG_SMTP_PORT:-1025}:1025"
       - "${MAILHOG_UI_PORT:-8025}:8025"
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 2; done;
+      mc mb -p local/${APP_AVATAR_MINIO_BUCKET:-avatars} || true;
+      exit 0;
+      "
+
+  imgproxy:
+    image: darthsim/imgproxy:v3.29.1
+    environment:
+      IMGPROXY_BIND: :8080
+      IMGPROXY_KEY: ${APP_IMGPROXY_KEY:-0123456789abcdef0123456789abcdef}
+      IMGPROXY_SALT: ${APP_IMGPROXY_SALT:-abcdef0123456789abcdef0123456789}
+      IMGPROXY_USE_S3: true
+      IMGPROXY_S3_ENDPOINT: http://minio:9000
+      IMGPROXY_S3_USE_PATH_STYLE: true
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${IMGPROXY_PORT:-8082}:8080"
+    depends_on:
+      - minio
+
   backend:
     build:
       context: ..
@@ -38,13 +77,28 @@ services:
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
       MAIL_SMTP_STARTTLS_ENABLE: ${MAIL_SMTP_STARTTLS_ENABLE:-false}
       APP_MAIL_FROM: ${APP_MAIL_FROM:-noreply@nexuscrm.com}
+      APP_AVATAR_PROVIDER: ${APP_AVATAR_PROVIDER:-minio}
       APP_AVATAR_STORAGE_PATH: ${APP_AVATAR_STORAGE_PATH:-/app/data/avatars}
+      APP_AVATAR_PUBLIC_BASE_URL: ${APP_AVATAR_PUBLIC_BASE_URL:-http://localhost:8080}
+      APP_AVATAR_MINIO_ENDPOINT: ${APP_AVATAR_MINIO_ENDPOINT:-http://minio:9000}
+      APP_AVATAR_MINIO_ACCESS_KEY: ${APP_AVATAR_MINIO_ACCESS_KEY:-minioadmin}
+      APP_AVATAR_MINIO_SECRET_KEY: ${APP_AVATAR_MINIO_SECRET_KEY:-minioadmin}
+      APP_AVATAR_MINIO_BUCKET: ${APP_AVATAR_MINIO_BUCKET:-avatars}
+      APP_IMGPROXY_BASE_URL: ${APP_IMGPROXY_BASE_URL:-http://localhost:8082}
+      APP_IMGPROXY_KEY: ${APP_IMGPROXY_KEY:-0123456789abcdef0123456789abcdef}
+      APP_IMGPROXY_SALT: ${APP_IMGPROXY_SALT:-abcdef0123456789abcdef0123456789}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
       mailhog:
+        condition: service_started
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+      imgproxy:
         condition: service_started
 
   frontend:
@@ -62,3 +116,4 @@ services:
 
 volumes:
   postgres_data:
+  minio_data:

@@ -1,6 +1,8 @@
 package com.example.contact.application.port.in;
 
+import com.example.contact.application.command.ActivityPageResult;
 import com.example.contact.application.command.ActivityResult;
+import com.example.contact.application.command.ActivitySearchQuery;
 import com.example.contact.domain.valueobject.ContactId;
 import java.util.List;
 
@@ -16,4 +18,6 @@ public interface ListActivitiesUseCase {
      * @return activities
      */
     List<ActivityResult> execute(ContactId contactId);
+
+    ActivityPageResult search(ContactId contactId, ActivitySearchQuery query);
 }

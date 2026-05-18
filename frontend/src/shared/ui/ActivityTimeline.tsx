@@ -17,7 +17,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 interface ActivityTimelineProps {
   activities: ActivityViewModel[];
-  filter?: string;
   canManage?: boolean;
   onConfirm?: (activityId: string) => Promise<void>;
   onDelete?: (activityId: string) => Promise<void>;
@@ -25,16 +24,11 @@ interface ActivityTimelineProps {
 
 export function ActivityTimeline({
   activities,
-  filter,
   canManage = false,
   onConfirm,
   onDelete,
 }: ActivityTimelineProps) {
-  const filtered = filter
-    ? activities.filter((a) => a.activityType.toUpperCase() === filter.toUpperCase())
-    : activities;
-
-  if (filtered.length === 0) {
+  if (activities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-on-surface-variant">
         <Activity className="mb-2 h-8 w-8 opacity-40" />
@@ -45,7 +39,7 @@ export function ActivityTimeline({
 
   return (
     <ol className="space-y-3">
-      {filtered.map((activity) => {
+      {activities.map((activity) => {
         const meta = getActivityMeta(activity.activityType);
         const Icon = ICON_MAP[meta.iconName] ?? Activity;
         return (

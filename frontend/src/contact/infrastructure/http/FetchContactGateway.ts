@@ -7,6 +7,7 @@ import { ContactId } from '../../domain/valueobject/ContactId';
 import { ContactApiMapper } from '../mapper/ContactApiMapper';
 import {
   AssignTagsApiDto,
+  ActivityPageApiDto,
   ContactApiDto,
   ContactPageApiDto,
   CreateContactApiDto,
@@ -16,8 +17,17 @@ import {
 
 export interface ContactListParams {
   search?: string;
+  email?: string;
+  phone?: string;
+  tagNames?: string[];
   page?: number;
   size?: number;
+}
+
+export interface ContactActivitiesParams {
+  page?: number;
+  size?: number;
+  activityType?: string;
 }
 
 export class FetchContactGateway implements ContactGateway {
@@ -31,11 +41,32 @@ export class FetchContactGateway implements ContactGateway {
   async listPaged(params: ContactListParams): Promise<ContactPageApiDto> {
     const query = new URLSearchParams();
     if (params.search) query.set('search', params.search);
+    if (params.email) query.set('email', params.email);
+    if (params.phone) query.set('phone', params.phone);
+    if (params.tagNames) {
+      for (const tagName of params.tagNames) {
+        if (tagName.trim()) {
+          query.append('tagNames', tagName.trim());
+        }
+      }
+    }
     query.set('page', String(params.page ?? 0));
     query.set('size', String(params.size ?? 20));
     const response = await apiFetch(this.baseUrl, `/api/contacts?${query}`);
     if (!response.ok) throw new Error(await parseApiError(response));
     return (await response.json()) as ContactPageApiDto;
+  }
+
+  async listActivities(contactId: string, params: ContactActivitiesParams): Promise<ActivityPageApiDto> {
+    const query = new URLSearchParams();
+    query.set('page', String(params.page ?? 0));
+    query.set('size', String(params.size ?? 10));
+    if (params.activityType) {
+      query.set('activityType', params.activityType);
+    }
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/activities?${query.toString()}`);
+    if (!response.ok) throw new Error(await parseApiError(response));
+    return (await response.json()) as ActivityPageApiDto;
   }
 
   async getById(id: string): Promise<ContactApiDto> {

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
  * Stores avatars on local filesystem and returns public URL path.
  */
 @Component
+@ConditionalOnProperty(name = "app.avatar.provider", havingValue = "local")
 public class LocalAvatarStorageAdapter implements AvatarStoragePort {
 
     private final Path storageDir;

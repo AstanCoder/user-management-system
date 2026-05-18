@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 /**
  * REST driving adapter for contact CRUD operations. Delegates all business logic to use cases.
@@ -74,10 +75,13 @@ public class ContactController {
     @GetMapping
     public ContactPageResponse list(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) List<String> tagNames,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String sort) {
-        ContactSearchQuery query = mapper.toSearchQuery(search, page, size, sort);
+        ContactSearchQuery query = mapper.toSearchQuery(search, email, phone, tagNames, page, size, sort);
         ContactPageResult result = listContactsUseCase.execute(query);
         return mapper.toPageResponse(result);
     }

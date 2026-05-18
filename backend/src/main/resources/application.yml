@@ -39,7 +39,18 @@ app:
   mail:
     from: ${APP_MAIL_FROM:noreply@nexuscrm.com}
   avatar:
+    provider: ${APP_AVATAR_PROVIDER:minio}
     storage-path: ${APP_AVATAR_STORAGE_PATH:./data/avatars}
+    public-base-url: ${APP_AVATAR_PUBLIC_BASE_URL:http://localhost:8080}
+    minio:
+      endpoint: ${APP_AVATAR_MINIO_ENDPOINT:http://localhost:9000}
+      access-key: ${APP_AVATAR_MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${APP_AVATAR_MINIO_SECRET_KEY:minioadmin}
+      bucket: ${APP_AVATAR_MINIO_BUCKET:avatars}
+  imgproxy:
+    base-url: ${APP_IMGPROXY_BASE_URL:http://localhost:8082}
+    key: ${APP_IMGPROXY_KEY:0123456789abcdef0123456789abcdef}
+    salt: ${APP_IMGPROXY_SALT:abcdef0123456789abcdef0123456789}
 
 springdoc:
   api-docs:

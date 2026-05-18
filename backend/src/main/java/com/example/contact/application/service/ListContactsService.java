@@ -26,6 +26,9 @@ public final class ListContactsService implements ListContactsUseCase {
     public ContactPageResult execute(ContactSearchQuery query) {
         ContactSearchCriteria criteria = ContactSearchCriteria.builder()
                 .search(query.getSearch())
+                .email(query.getEmail())
+                .phone(query.getPhone())
+                .tagNames(query.getTagNames())
                 .page(query.getPage())
                 .size(query.getSize())
                 .sort(query.getSort())

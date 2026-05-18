@@ -15,9 +15,11 @@ import com.example.contact.application.port.in.GetContactUseCase;
 import com.example.contact.application.port.in.ListContactsUseCase;
 import com.example.contact.application.port.in.UpdateContactUseCase;
 import com.example.contact.application.port.in.UploadAvatarUseCase;
+import com.example.contact.application.port.out.ResolveAvatarUrlPort;
 import com.example.shared.test.WebMvcTestSecurityConfig;
 import com.example.contact.domain.valueobject.ContactId;
 import com.example.contact.interfaces.rest.exception.ContactExceptionHandler;
+import com.example.contact.interfaces.rest.mapper.AvatarUrlRestMapper;
 import com.example.contact.interfaces.rest.mapper.ContactRestMapperImpl;
 import com.example.contact.shared.mapper.DomainTypeMapper;
 import com.example.identity.infrastructure.config.SecurityConfig;
@@ -43,7 +45,13 @@ import org.springframework.test.web.servlet.MockMvc;
                 @ComponentScan.Filter(
                         type = FilterType.ASSIGNABLE_TYPE,
                         classes = {JwtAuthenticationFilter.class, SecurityConfig.class}))
-@Import({ContactExceptionHandler.class, ContactRestMapperImpl.class, DomainTypeMapper.class, WebMvcTestSecurityConfig.class})
+@Import({
+    ContactExceptionHandler.class,
+    AvatarUrlRestMapper.class,
+    ContactRestMapperImpl.class,
+    DomainTypeMapper.class,
+    WebMvcTestSecurityConfig.class
+})
 class ContactControllerTest {
 
     @Autowired
@@ -70,6 +78,9 @@ class ContactControllerTest {
     @MockBean
     private UploadAvatarUseCase uploadAvatarUseCase;
 
+    @MockBean
+    private ResolveAvatarUrlPort resolveAvatarUrlPort;
+
     @Test
     void list_withoutAuth_returns401() throws Exception {
         mockMvc.perform(get("/api/contacts")).andExpect(status().isUnauthorized());
@@ -78,6 +89,7 @@ class ContactControllerTest {
     @Test
     @WithMockUser(roles = "VIEWER")
     void list_returns200() throws Exception {
+        when(resolveAvatarUrlPort.resolve(any())).thenAnswer(invocation -> invocation.getArgument(0));
         ContactId id = ContactId.generate();
         when(listContactsUseCase.execute(any()))
                 .thenReturn(ContactPageResult.builder()
@@ -98,6 +110,38 @@ class ContactControllerTest {
         mockMvc.perform(get("/api/contacts"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].firstName").value("Jane"));
+    }
+
+    @Test
+    @WithMockUser(roles = "VIEWER")
+    void list_withAdvancedFilters_returns200() throws Exception {
+        when(resolveAvatarUrlPort.resolve(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        ContactId id = ContactId.generate();
+        when(listContactsUseCase.execute(any()))
+                .thenReturn(ContactPageResult.builder()
+                        .content(List.of(ContactResult.builder()
+                                .id(id)
+                                .firstName("Jane")
+                                .lastName("Doe")
+                                .email("jane@example.com")
+                                .phone("+17863024490")
+                                .createdAt(Instant.now())
+                                .updatedAt(Instant.now())
+                                .build()))
+                        .totalElements(1)
+                        .totalPages(1)
+                        .page(0)
+                        .size(20)
+                        .build());
+
+        mockMvc.perform(get("/api/contacts")
+                        .param("search", "jane")
+                        .param("phone", "786")
+                        .param("email", "jane@example.com")
+                        .param("tagNames", "typescript")
+                        .param("tagNames", "java"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].email").value("jane@example.com"));
     }
 
     @Test

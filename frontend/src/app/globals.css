@@ -16,7 +16,3 @@ body {
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
   line-height: 1.5;
 }
-
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
