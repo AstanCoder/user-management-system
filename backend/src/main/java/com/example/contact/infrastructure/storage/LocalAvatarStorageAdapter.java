@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,7 +29,7 @@ public class LocalAvatarStorageAdapter implements AvatarStoragePort {
         try {
             Files.createDirectories(storageDir);
             String extension = extensionFromContentType(contentType);
-            String fileName = contactId.value() + extension;
+            String fileName = contactId.value() + "-" + UUID.randomUUID() + extension;
             Path target = storageDir.resolve(fileName);
             Files.write(target, data);
             return "/avatars/" + fileName;

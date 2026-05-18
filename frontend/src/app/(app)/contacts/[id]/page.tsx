@@ -1,25 +1,24 @@
 'use client';
 
-import Link from 'next/link';
-import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
-import {
-  ArrowLeft,
-  Phone,
-  Mail,
-  Edit,
-  Calendar,
-  Filter,
-  Building2,
-  MapPin,
-  ChevronDown,
-} from 'lucide-react';
 import { useContactDetail } from '@/contact/interfaces/hooks/useContactDetail';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
+import { ActivityTimeline } from '@/shared/ui/ActivityTimeline';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Button } from '@/shared/ui/Button';
 import { Chip } from '@/shared/ui/Chip';
-import { ActivityTimeline } from '@/shared/ui/ActivityTimeline';
+import {
+    ArrowLeft,
+    Building2,
+    ChevronDown,
+    Edit,
+    Filter,
+    Mail,
+    MapPin,
+    Phone
+} from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
 type DetailTab = 'activity' | 'company';
 
@@ -193,13 +192,6 @@ export default function ContactDetailPage() {
                 >
                   <Mail className="h-4 w-4" />
                   Email
-                </a>
-                <a
-                  href="#"
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container lg:hidden"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Schedule
                 </a>
                 {canEdit && (
                   <Link

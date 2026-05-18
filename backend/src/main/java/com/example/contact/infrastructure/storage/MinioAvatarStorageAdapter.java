@@ -8,6 +8,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import java.io.ByteArrayInputStream;
 import java.util.Locale;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class MinioAvatarStorageAdapter implements AvatarStoragePort {
     public String store(ContactId contactId, String contentType, byte[] data) {
         String safeContentType = contentType == null || contentType.isBlank() ? "application/octet-stream" : contentType;
         String extension = extensionFromContentType(contentType);
-        String objectKey = "avatars/" + contactId.value() + extension;
+        String objectKey = "avatars/" + contactId.value() + "-" + UUID.randomUUID() + extension;
         try {
             ensureBucket();
             minioClient.putObject(PutObjectArgs.builder()
