@@ -18,4 +18,5 @@ public class ActivityResult {
     UUID authorUserId;
     Instant occurredAt;
     Instant createdAt;
+    boolean confirmed;
 }

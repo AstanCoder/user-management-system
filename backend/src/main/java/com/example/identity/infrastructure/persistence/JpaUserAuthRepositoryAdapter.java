@@ -58,6 +58,17 @@ public class JpaUserAuthRepositoryAdapter implements UserAuthRepository {
         return springDataUserRepository.findByEmailIgnoreCase(email.trim().toLowerCase()).isPresent();
     }
 
+    @Override
+    public void recordLastActiveAt(UserId id) {
+        springDataUserRepository
+                .findById(id.value())
+                .ifPresent(entity -> {
+                    User user = userPersistenceMapper.toDomain(entity);
+                    user.recordLastActiveAt();
+                    springDataUserRepository.save(userPersistenceMapper.toEntity(user));
+                });
+    }
+
     private AuthUser toAuthUser(UserJpaEntity entity) {
         return new AuthUser(
                 UserId.of(entity.getId()),

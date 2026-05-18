@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-add-last-active-at-to-users
+      author: nexus-design-parity
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: last_active_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: true

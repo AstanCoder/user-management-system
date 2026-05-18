@@ -42,4 +42,7 @@ public class ActivityJpaEntity {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @Column(name = "confirmed", nullable = false)
+    private boolean confirmed;
 }

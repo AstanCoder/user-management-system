@@ -46,9 +46,10 @@ export class ContactViewModelMapper {
       tags: (dto.tags ?? []).map((t) => ({ id: t.id, name: t.name })),
       notes: (dto.notes ?? []).map((n) => ({
         id: n.id,
-        body: n.body,
-        authorId: n.authorId,
+        body: n.content,
+        authorUserId: n.authorUserId,
         createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
       })),
       activities: (dto.activities ?? []).map((a) => ({
         id: a.id,
@@ -57,6 +58,7 @@ export class ContactViewModelMapper {
         authorUserId: a.authorUserId,
         occurredAt: a.occurredAt,
         createdAt: a.createdAt,
+        confirmed: a.confirmed,
       })),
     };
   }

@@ -1,7 +1,12 @@
 package com.example.user.domain.port;
 
+import com.example.user.domain.model.Role;
 import com.example.user.domain.model.User;
 import com.example.user.domain.model.UserId;
+import com.example.user.domain.model.UserStatus;
+import com.example.user.domain.query.PagedUsers;
+import com.example.user.domain.query.UserListCriteria;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +21,14 @@ public interface UserRepository {
      * @return users
      */
     List<User> findAll();
+
+    /**
+     * Returns a paginated, optionally filtered list of users.
+     *
+     * @param criteria page, size, and optional search term
+     * @return paged users
+     */
+    PagedUsers findPage(UserListCriteria criteria);
 
     /**
      * Finds a user by id.
@@ -60,5 +73,21 @@ public interface UserRepository {
      *
      * @return active count
      */
-    long countByStatus(com.example.user.domain.model.UserStatus status);
+    long countByStatus(UserStatus status);
+
+    /**
+     * Counts users with the given role.
+     *
+     * @param role role
+     * @return count
+     */
+    long countByRole(Role role);
+
+    /**
+     * Counts users created on or after the given instant.
+     *
+     * @param since lower bound (inclusive)
+     * @return count
+     */
+    long countCreatedSince(Instant since);
 }

@@ -1,9 +1,15 @@
 package com.example.contact.interfaces.rest.dto;
 
 import java.util.List;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Value
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class AssignTagsRequest {
 
     List<String> tagNames;

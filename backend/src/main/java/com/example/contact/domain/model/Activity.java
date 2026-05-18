@@ -18,6 +18,7 @@ public final class Activity {
     private final String description;
     private final Instant occurredAt;
     private final Instant createdAt;
+    private final boolean confirmed;
 
     private Activity(
             ActivityId id,
@@ -26,7 +27,8 @@ public final class Activity {
             String activityType,
             String description,
             Instant occurredAt,
-            Instant createdAt) {
+            Instant createdAt,
+            boolean confirmed) {
         this.id = id;
         this.contactId = contactId;
         this.authorUserId = authorUserId;
@@ -34,6 +36,7 @@ public final class Activity {
         this.description = description;
         this.occurredAt = occurredAt;
         this.createdAt = createdAt;
+        this.confirmed = confirmed;
     }
 
     /**
@@ -53,7 +56,8 @@ public final class Activity {
             UUID authorUserId,
             String activityType,
             String description,
-            Instant occurredAt) {
+            Instant occurredAt,
+            boolean confirmed) {
         return new Activity(
                 id,
                 contactId,
@@ -61,7 +65,8 @@ public final class Activity {
                 require(activityType, "activityType"),
                 require(description, "description"),
                 occurredAt != null ? occurredAt : Instant.now(),
-                Instant.now());
+                Instant.now(),
+                confirmed);
     }
 
     /**
@@ -83,8 +88,16 @@ public final class Activity {
             String activityType,
             String description,
             Instant occurredAt,
-            Instant createdAt) {
-        return new Activity(id, contactId, authorUserId, activityType, description, occurredAt, createdAt);
+            Instant createdAt,
+            boolean confirmed) {
+        return new Activity(id, contactId, authorUserId, activityType, description, occurredAt, createdAt, confirmed);
+    }
+
+    public Activity confirm() {
+        if (confirmed) {
+            return this;
+        }
+        return new Activity(id, contactId, authorUserId, activityType, description, occurredAt, createdAt, true);
     }
 
     private static String require(String value, String field) {
@@ -120,6 +133,10 @@ public final class Activity {
 
     public Instant createdAt() {
         return createdAt;
+    }
+
+    public boolean confirmed() {
+        return confirmed;
     }
 
     @Override

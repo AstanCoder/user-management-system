@@ -13,3 +13,7 @@ databaseChangeLog:
       file: db/changelog/changes/006-create-users-and-roles.yaml
   - include:
       file: db/changelog/changes/007-create-password-reset-tokens.yaml
+  - include:
+      file: db/changelog/changes/008-add-last-active-at-to-users.yaml
+  - include:
+      file: db/changelog/changes/009-add-confirmed-to-activities.yaml

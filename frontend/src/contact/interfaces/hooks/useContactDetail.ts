@@ -38,12 +38,37 @@ export function useContactDetail(contactId: string) {
   );
 
   const addActivity = useCallback(
-    async (activityType: string, description?: string) => {
+    async (activityType: string, description?: string, confirmed = true) => {
       await contactDependencies.contactGateway.addActivity(contactId, {
         activityType,
         description: description ?? null,
         occurredAt: new Date().toISOString(),
+        confirmed,
       });
+      await refetch();
+    },
+    [contactId, refetch],
+  );
+
+  const confirmActivity = useCallback(
+    async (activityId: string) => {
+      await contactDependencies.contactGateway.confirmActivity(contactId, activityId);
+      await refetch();
+    },
+    [contactId, refetch],
+  );
+
+  const deleteActivity = useCallback(
+    async (activityId: string) => {
+      await contactDependencies.contactGateway.deleteActivity(contactId, activityId);
+      await refetch();
+    },
+    [contactId, refetch],
+  );
+
+  const deleteNote = useCallback(
+    async (noteId: string) => {
+      await contactDependencies.contactGateway.deleteNote(contactId, noteId);
       await refetch();
     },
     [contactId, refetch],
@@ -66,5 +91,17 @@ export function useContactDetail(contactId: string) {
     [contactId, refetch],
   );
 
-  return { contact, loading, error, refetch, addNote, addActivity, assignTags, uploadAvatar };
+  return {
+    contact,
+    loading,
+    error,
+    refetch,
+    addNote,
+    deleteNote,
+    addActivity,
+    confirmActivity,
+    deleteActivity,
+    assignTags,
+    uploadAvatar,
+  };
 }

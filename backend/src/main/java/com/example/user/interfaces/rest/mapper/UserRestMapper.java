@@ -3,12 +3,14 @@ package com.example.user.interfaces.rest.mapper;
 import com.example.user.application.command.CreateUserCommand;
 import com.example.user.application.command.InviteUserCommand;
 import com.example.user.application.command.UpdateUserCommand;
+import com.example.user.application.command.UserPageResult;
 import com.example.user.application.command.UserResult;
 import com.example.user.application.command.UserStatsResult;
 import com.example.user.domain.model.UserId;
 import com.example.user.interfaces.rest.dto.CreateUserRequest;
 import com.example.user.interfaces.rest.dto.InviteUserRequest;
 import com.example.user.interfaces.rest.dto.UpdateUserRequest;
+import com.example.user.interfaces.rest.dto.UserPageResponse;
 import com.example.user.interfaces.rest.dto.UserResponse;
 import com.example.user.interfaces.rest.dto.UserStatsResponse;
 import org.mapstruct.Mapper;
@@ -62,4 +64,20 @@ public interface UserRestMapper {
      * @return response
      */
     UserStatsResponse toResponse(UserStatsResult result);
+
+    /**
+     * Maps paginated user results to HTTP response.
+     *
+     * @param result page result
+     * @return page response
+     */
+    default UserPageResponse toPageResponse(UserPageResult result) {
+        return UserPageResponse.builder()
+                .content(result.getContent().stream().map(this::toResponse).toList())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .page(result.getPage())
+                .size(result.getSize())
+                .build();
+    }
 }

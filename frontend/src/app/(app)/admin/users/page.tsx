@@ -1,14 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Search, UserPlus, Users, Shield, PenLine } from 'lucide-react';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
+import { useUserAdmin } from '@/user/interfaces/hooks/useUserAdmin';
 import { userDependencies } from '@/user/infrastructure/config/userDependencies';
-import { UserDto, UserRole, UserStatsDto } from '@/user/domain/port/UserAdminGateway';
+import { UserDto, UserRole } from '@/user/domain/port/UserAdminGateway';
+import { Avatar } from '@/shared/ui/Avatar';
 import { Badge, BadgeProps } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
-import { Card } from '@/shared/ui/Card';
+import { DropdownMenu } from '@/shared/ui/DropdownMenu';
+import { Pagination } from '@/shared/ui/Pagination';
+import { StatCard } from '@/shared/ui/StatCard';
+import { formatRelativeTime } from '@/shared/lib/relativeTime';
 
+const PAGE_SIZE = 20;
 const ROLES: UserRole[] = ['ADMIN', 'EDITOR', 'VIEWER'];
 
 function roleBadgeTone(role: UserRole): BadgeProps['tone'] {
@@ -17,47 +25,51 @@ function roleBadgeTone(role: UserRole): BadgeProps['tone'] {
   return 'muted';
 }
 
+function statusDotColor(status: UserDto['status']): string {
+  if (status === 'ACTIVE') return 'bg-[#2E7D32]';
+  if (status === 'INVITED') return 'bg-amber-500';
+  return 'bg-error';
+}
+
+function statusLabel(status: UserDto['status']): string {
+  if (status === 'ACTIVE') return 'Active';
+  if (status === 'INVITED') return 'Invited';
+  return 'Disabled';
+}
+
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<UserDto[]>([]);
-  const [stats, setStats] = useState<UserStatsDto | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    const [u, s] = await Promise.all([
-      userDependencies.userAdminGateway.list(),
-      userDependencies.userAdminGateway.stats(),
-    ]);
-    setUsers(u);
-    setStats(s);
-  }, []);
+  const { users, stats, loading, error, totalElements, totalPages, refetch } = useUserAdmin({
+    search,
+    page,
+    size: PAGE_SIZE,
+  });
 
-  useEffect(() => {
-    if (user && user.role !== 'ADMIN') {
-      router.replace('/contacts');
-      return;
-    }
-    if (user?.role === 'ADMIN') {
-      void load().catch((e) => setError(e instanceof Error ? e.message : 'Failed to load users'));
-    }
-  }, [user, router, load]);
+  if (user && user.role !== 'ADMIN') {
+    router.replace('/contacts');
+    return null;
+  }
 
   const handleRoleChange = async (target: UserDto, role: UserRole) => {
     if (target.role === role) return;
     setBusyId(target.id);
-    setError(null);
+    setActionError(null);
     try {
-      const updated = await userDependencies.userAdminGateway.update(target.id, {
+      await userDependencies.userAdminGateway.update(target.id, {
         firstName: target.firstName,
         lastName: target.lastName,
         role,
         status: target.status,
       });
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      await refetch();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to update role');
+      setActionError(e instanceof Error ? e.message : 'Failed to update role');
     } finally {
       setBusyId(null);
     }
@@ -65,103 +77,162 @@ export default function AdminUsersPage() {
 
   const handleDelete = async (target: UserDto) => {
     if (target.id === user?.userId) {
-      setError('You cannot delete your own account');
+      setActionError('You cannot delete your own account');
       return;
     }
-    if (!window.confirm(`Delete ${target.firstName} ${target.lastName}?`)) {
-      return;
-    }
+    if (!window.confirm(`Delete ${target.firstName} ${target.lastName}?`)) return;
     setBusyId(target.id);
-    setError(null);
+    setActionError(null);
     try {
       await userDependencies.userAdminGateway.delete(target.id);
-      await load();
+      await refetch();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to delete user');
+      setActionError(e instanceof Error ? e.message : 'Failed to delete user');
     } finally {
       setBusyId(null);
     }
   };
 
-  if (!stats) return <p>Loading…</p>;
-
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-bold text-primary">User management</h1>
-      <p className="mb-6 text-on-surface-variant">Manage team access and roles.</p>
-      {error && <p className="mb-4 text-sm text-error">{error}</p>}
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Card>
-          <p className="text-xs uppercase text-on-surface-variant">Total users</p>
-          <p className="text-2xl font-bold">{stats.totalUsers}</p>
-        </Card>
-        <Card>
-          <p className="text-xs uppercase text-on-surface-variant">Active</p>
-          <p className="text-2xl font-bold">{stats.activeUsers}</p>
-        </Card>
-        <Card>
-          <p className="text-xs uppercase text-on-surface-variant">Invited</p>
-          <p className="text-2xl font-bold">{stats.invitedUsers}</p>
-        </Card>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">User Management</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">Manage team access and roles.</p>
+        </div>
+        <Link href="/admin/users/invite">
+          <Button className="flex items-center gap-1.5">
+            <UserPlus className="h-4 w-4" />
+            Invite User
+          </Button>
+        </Link>
       </div>
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-outline-variant text-left">
-            <th className="py-2">User</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th className="py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => {
-            const isSelf = u.id === user?.userId;
-            const disabled = busyId === u.id;
-            return (
-              <tr key={u.id} className="border-b border-outline-variant">
-                <td className="py-3">
-                  <p className="font-medium">
-                    {u.firstName} {u.lastName}
-                    {isSelf && <span className="ml-2 text-xs text-secondary">(you)</span>}
-                  </p>
-                  <p className="text-on-surface-variant">{u.email}</p>
-                </td>
-                <td>
-                  <div className="flex flex-col gap-2">
-                    <Badge label={u.role} tone={roleBadgeTone(u.role)} />
-                    <select
-                      value={u.role}
-                      disabled={disabled}
-                      onChange={(e) => void handleRoleChange(u, e.target.value as UserRole)}
-                      className="rounded border border-outline-variant bg-surface-container-lowest px-2 py-1 text-sm"
-                      aria-label={`Change role for ${u.email}`}
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <Badge label={u.status} tone="muted" />
-                </td>
-                <td className="py-3 text-right">
-                  <Button
-                    variant="danger"
-                    disabled={disabled || isSelf}
-                    onClick={() => void handleDelete(u)}
-                    className="text-xs"
-                  >
-                    Delete
-                  </Button>
-                </td>
+
+      {(error || actionError) && (
+        <div className="rounded-xl bg-error-container p-4 text-sm text-on-error-container">
+          {error ?? actionError}
+        </div>
+      )}
+
+      {stats && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Total Users"
+            value={stats.totalUsers}
+            subtitle={`+${stats.usersCreatedLast7Days} this week`}
+            icon={Users}
+          />
+          <StatCard
+            label="Active Admins"
+            value={stats.adminCount}
+            subtitle={`${stats.invitedPendingCount} Pending`}
+            icon={Shield}
+          />
+          <StatCard
+            label="System Editors"
+            value={stats.editorCount}
+            icon={PenLine}
+          />
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+          <input
+            type="search"
+            placeholder="Search by name or email…"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            className="h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant">
+        {loading ? (
+          <div className="p-8 text-center text-on-surface-variant">Loading users…</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-outline-variant bg-surface-container-low text-left">
+                <th className="px-4 py-3 font-medium text-on-surface-variant">User</th>
+                <th className="px-4 py-3 font-medium text-on-surface-variant">Role</th>
+                <th className="px-4 py-3 font-medium text-on-surface-variant">Status</th>
+                <th className="px-4 py-3 font-medium text-on-surface-variant">Last Active</th>
+                <th className="px-4 py-3" />
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const isSelf = u.id === user?.userId;
+                const disabled = busyId === u.id;
+                const fullName = `${u.firstName} ${u.lastName}`;
+                return (
+                  <tr key={u.id} className="border-b border-outline-variant last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={fullName} size="sm" />
+                        <div>
+                          <p className="font-medium text-on-surface">
+                            {fullName}
+                            {isSelf && (
+                              <span className="ml-2 text-xs text-secondary">(you)</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-on-surface-variant">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge label={u.role} tone={roleBadgeTone(u.role)} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${statusDotColor(u.status)}`} />
+                        <span className="text-on-surface">{statusLabel(u.status)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-on-surface-variant">
+                      {u.lastActiveAt ? formatRelativeTime(u.lastActiveAt) : 'Never'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <DropdownMenu
+                        actions={[
+                          ...ROLES.map((role) => ({
+                            label: `Set as ${role}`,
+                            onClick: () => void handleRoleChange(u, role),
+                            disabled: disabled || u.role === role,
+                          })),
+                          {
+                            label: 'Delete',
+                            onClick: () => void handleDelete(u),
+                            destructive: true,
+                            disabled: disabled || isSelf,
+                          },
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   );
 }

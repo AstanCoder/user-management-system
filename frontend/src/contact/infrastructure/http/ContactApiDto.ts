@@ -5,9 +5,10 @@ export interface TagApiDto {
 
 export interface NoteApiDto {
   id: string;
-  body: string;
-  authorId: string;
+  content: string;
+  authorUserId: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ActivityApiDto {
@@ -17,12 +18,14 @@ export interface ActivityApiDto {
   authorUserId: string | null;
   occurredAt: string;
   createdAt: string;
+  confirmed: boolean;
 }
 
 export interface LogActivityApiDto {
   activityType: string;
   description?: string | null;
   occurredAt: string;
+  confirmed?: boolean;
 }
 
 export interface AssignTagsApiDto {

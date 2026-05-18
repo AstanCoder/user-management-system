@@ -33,12 +33,13 @@ public final class LogActivityService implements LogActivityUseCase {
             UUID authorUserId,
             String activityType,
             String description,
-            Instant occurredAt) {
+            Instant occurredAt,
+            boolean confirmed) {
         if (contactRepository.findById(contactId).isEmpty()) {
             throw new ContactNotFoundException(contactId);
         }
         Activity activity = Activity.create(
-                ActivityId.generate(), contactId, authorUserId, activityType, description, occurredAt);
+                ActivityId.generate(), contactId, authorUserId, activityType, description, occurredAt, confirmed);
         return mapper.toActivityResult(activityRepository.save(activity));
     }
 }

@@ -3,8 +3,11 @@ package com.example.contact.infrastructure.config;
 import com.example.contact.application.mapper.ContactApplicationMapper;
 import com.example.contact.application.port.in.AddNoteUseCase;
 import com.example.contact.application.port.in.AssignTagsUseCase;
+import com.example.contact.application.port.in.ConfirmActivityUseCase;
 import com.example.contact.application.port.in.CreateContactUseCase;
+import com.example.contact.application.port.in.DeleteActivityUseCase;
 import com.example.contact.application.port.in.DeleteContactUseCase;
+import com.example.contact.application.port.in.DeleteNoteUseCase;
 import com.example.contact.application.port.in.GetContactUseCase;
 import com.example.contact.application.port.in.ListActivitiesUseCase;
 import com.example.contact.application.port.in.ListContactsUseCase;
@@ -14,8 +17,11 @@ import com.example.contact.application.port.in.UpdateContactUseCase;
 import com.example.contact.application.port.in.UploadAvatarUseCase;
 import com.example.contact.application.service.AddNoteService;
 import com.example.contact.application.service.AssignTagsService;
+import com.example.contact.application.service.ConfirmActivityService;
 import com.example.contact.application.service.CreateContactService;
+import com.example.contact.application.service.DeleteActivityService;
 import com.example.contact.application.service.DeleteContactService;
+import com.example.contact.application.service.DeleteNoteService;
 import com.example.contact.application.service.GetContactService;
 import com.example.contact.application.service.ListActivitiesService;
 import com.example.contact.application.service.ListContactsService;
@@ -99,6 +105,22 @@ public class ContactModuleConfig {
     public ListActivitiesUseCase listActivitiesUseCase(
             ActivityRepository activityRepository, ContactApplicationMapper mapper) {
         return new ListActivitiesService(activityRepository, mapper);
+    }
+
+    @Bean
+    public ConfirmActivityUseCase confirmActivityUseCase(
+            ActivityRepository activityRepository, ContactApplicationMapper mapper) {
+        return new ConfirmActivityService(activityRepository, mapper);
+    }
+
+    @Bean
+    public DeleteActivityUseCase deleteActivityUseCase(ActivityRepository activityRepository) {
+        return new DeleteActivityService(activityRepository);
+    }
+
+    @Bean
+    public DeleteNoteUseCase deleteNoteUseCase(NoteRepository noteRepository) {
+        return new DeleteNoteService(noteRepository);
     }
 
     @Bean

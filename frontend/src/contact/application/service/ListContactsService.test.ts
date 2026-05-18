@@ -19,6 +19,13 @@ describe('ListContactsService', () => {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      addNote: vi.fn(),
+      deleteNote: vi.fn(),
+      addActivity: vi.fn(),
+      confirmActivity: vi.fn(),
+      deleteActivity: vi.fn(),
+      assignTags: vi.fn(),
+      uploadAvatar: vi.fn(),
     };
     const service = new ListContactsService(gateway);
     const result = await service.execute();

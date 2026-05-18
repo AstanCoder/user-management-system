@@ -49,4 +49,11 @@ public interface UserAuthRepository {
      * @return true if exists
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Updates last active timestamp for a user.
+     *
+     * @param id user id
+     */
+    void recordLastActiveAt(UserId id);
 }

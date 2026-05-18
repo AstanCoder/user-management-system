@@ -76,9 +76,16 @@ export class FetchContactGateway implements ContactGateway {
   async addNote(contactId: string, body: string): Promise<void> {
     const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/notes`, {
       method: 'POST',
-      body: JSON.stringify({ body }),
+      body: JSON.stringify({ content: body }),
     });
     if (!response.ok) throw new Error(await parseApiError(response));
+  }
+
+  async deleteNote(contactId: string, noteId: string): Promise<void> {
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/notes/${noteId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) throw new Error(await parseApiError(response));
   }
 
   async addActivity(contactId: string, payload: LogActivityPayload): Promise<void> {
@@ -86,12 +93,31 @@ export class FetchContactGateway implements ContactGateway {
       activityType: payload.activityType,
       description: payload.description ?? null,
       occurredAt: payload.occurredAt,
+      confirmed: payload.confirmed,
     };
     const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/activities`, {
       method: 'POST',
       body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error(await parseApiError(response));
+  }
+
+  async confirmActivity(contactId: string, activityId: string): Promise<void> {
+    const response = await apiFetch(
+      this.baseUrl,
+      `/api/contacts/${contactId}/activities/${activityId}/confirm`,
+      {
+        method: 'PATCH',
+      },
+    );
+    if (!response.ok) throw new Error(await parseApiError(response));
+  }
+
+  async deleteActivity(contactId: string, activityId: string): Promise<void> {
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/activities/${activityId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok && response.status !== 204) throw new Error(await parseApiError(response));
   }
 
   async assignTags(contactId: string, tagNames: string[]): Promise<void> {
@@ -106,14 +132,10 @@ export class FetchContactGateway implements ContactGateway {
   async uploadAvatar(contactId: string, file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await fetch(
-      `${this.baseUrl}/api/contacts/${contactId}/avatar`,
-      {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      },
-    );
+    const response = await apiFetch(this.baseUrl, `/api/contacts/${contactId}/avatar`, {
+      method: 'POST',
+      body: formData,
+    });
     if (!response.ok) throw new Error(await parseApiError(response));
     const data = (await response.json()) as { avatarUrl: string };
     return data.avatarUrl;

@@ -21,4 +21,5 @@ public class UserResponse {
     UserStatus status;
     Instant createdAt;
     Instant updatedAt;
+    Instant lastActiveAt;
 }

@@ -1,6 +1,8 @@
 package com.example.user.interfaces.rest;
 
+import com.example.user.application.command.UserPageResult;
 import com.example.user.application.command.UserResult;
+import com.example.user.application.command.UserSearchQuery;
 import com.example.user.application.command.UserStatsResult;
 import com.example.user.application.port.in.CreateUserUseCase;
 import com.example.user.application.port.in.DeleteUserUseCase;
@@ -12,13 +14,13 @@ import com.example.user.domain.model.UserId;
 import com.example.user.interfaces.rest.dto.CreateUserRequest;
 import com.example.user.interfaces.rest.dto.InviteUserRequest;
 import com.example.user.interfaces.rest.dto.UpdateUserRequest;
+import com.example.user.interfaces.rest.dto.UserPageResponse;
 import com.example.user.interfaces.rest.dto.UserResponse;
 import com.example.user.interfaces.rest.dto.UserStatsResponse;
 import com.example.user.interfaces.rest.mapper.UserRestMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -74,8 +77,12 @@ public class UserController {
      */
     @Operation(summary = "List users")
     @GetMapping
-    public List<UserResponse> list() {
-        return listUsersUseCase.execute().stream().map(mapper::toResponse).toList();
+    public UserPageResponse list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search) {
+        UserPageResult result = listUsersUseCase.execute(UserSearchQuery.of(page, size, search));
+        return mapper.toPageResponse(result);
     }
 
     /**

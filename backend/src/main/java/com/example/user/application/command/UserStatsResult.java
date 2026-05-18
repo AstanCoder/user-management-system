@@ -14,4 +14,9 @@ public class UserStatsResult {
     long activeUsers;
     long invitedUsers;
     long disabledUsers;
+    long adminCount;
+    long editorCount;
+    long viewerCount;
+    long invitedPendingCount;
+    long usersCreatedLast7Days;
 }

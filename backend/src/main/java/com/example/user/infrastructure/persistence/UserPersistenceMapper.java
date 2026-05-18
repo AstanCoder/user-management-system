@@ -29,6 +29,7 @@ public class UserPersistenceMapper {
                 .status(user.status().name())
                 .createdAt(user.createdAt())
                 .updatedAt(user.updatedAt())
+                .lastActiveAt(user.lastActiveAt())
                 .build();
     }
 
@@ -48,6 +49,7 @@ public class UserPersistenceMapper {
                 Role.valueOf(entity.getRole()),
                 UserStatus.valueOf(entity.getStatus()),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt());
+                entity.getUpdatedAt(),
+                entity.getLastActiveAt());
     }
 }

@@ -5,6 +5,7 @@ import com.example.contact.domain.port.ActivityRepository;
 import com.example.contact.domain.valueobject.ActivityId;
 import com.example.contact.domain.valueobject.ContactId;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,9 +25,19 @@ public class JpaActivityRepositoryAdapter implements ActivityRepository {
     }
 
     @Override
+    public Optional<Activity> findById(ActivityId activityId) {
+        return repository.findById(activityId.value()).map(this::toDomain);
+    }
+
+    @Override
     public Activity save(Activity activity) {
         ActivityJpaEntity saved = repository.save(toEntity(activity));
         return toDomain(saved);
+    }
+
+    @Override
+    public void delete(ActivityId activityId) {
+        repository.deleteById(activityId.value());
     }
 
     private Activity toDomain(ActivityJpaEntity entity) {
@@ -37,7 +48,8 @@ public class JpaActivityRepositoryAdapter implements ActivityRepository {
                 entity.getActivityType(),
                 entity.getDescription(),
                 entity.getOccurredAt(),
-                entity.getCreatedAt());
+                entity.getCreatedAt(),
+                entity.isConfirmed());
     }
 
     private ActivityJpaEntity toEntity(Activity activity) {
@@ -49,6 +61,7 @@ public class JpaActivityRepositoryAdapter implements ActivityRepository {
                 .description(activity.description())
                 .occurredAt(activity.occurredAt())
                 .createdAt(activity.createdAt())
+                .confirmed(activity.confirmed())
                 .build();
     }
 }

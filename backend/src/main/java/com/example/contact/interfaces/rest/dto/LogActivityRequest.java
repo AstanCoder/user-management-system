@@ -12,4 +12,6 @@ public class LogActivityRequest {
     @NotBlank String description;
 
     Instant occurredAt;
+
+    Boolean confirmed;
 }

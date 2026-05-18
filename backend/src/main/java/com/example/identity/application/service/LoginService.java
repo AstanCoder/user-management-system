@@ -36,6 +36,7 @@ public final class LoginService implements LoginUseCase {
         if (!passwordHasher.matches(command.getPassword(), user.passwordHash())) {
             throw new InvalidCredentialsException();
         }
+        userAuthRepository.recordLastActiveAt(user.id());
         String token = tokenIssuer.issueToken(user);
         return AuthResult.builder()
                 .token(token)

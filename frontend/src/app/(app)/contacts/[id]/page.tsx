@@ -1,19 +1,37 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, ReactNode, useState } from 'react';
+import { FormEvent, ReactNode, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import {
+  ArrowLeft,
+  Phone,
+  Mail,
+  Edit,
+  Calendar,
+  Filter,
+  Building2,
+  MapPin,
+  ChevronDown,
+  Trash2,
+} from 'lucide-react';
 import { useContactDetail } from '@/contact/interfaces/hooks/useContactDetail';
+import { useAuth } from '@/identity/interfaces/hooks/useAuth';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Button } from '@/shared/ui/Button';
-import { Card } from '@/shared/ui/Card';
 import { Chip } from '@/shared/ui/Chip';
+import { ActivityTimeline } from '@/shared/ui/ActivityTimeline';
+import { formatRelativeTime } from '@/shared/lib/relativeTime';
 
-type DetailTab = 'activity' | 'notes' | 'company';
+type DetailTab = 'activity' | 'company';
 
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-}
+const ACTIVITY_FILTERS = [
+  { value: '', label: 'All' },
+  { value: 'CALL', label: 'Calls' },
+  { value: 'EMAIL', label: 'Emails' },
+  { value: 'NOTE', label: 'Notes' },
+  { value: 'MEETING', label: 'Meetings' },
+];
 
 function DetailTabButton({
   active,
@@ -51,90 +69,129 @@ function ProfileField({ label, children }: { label: string; children: ReactNode 
 export default function ContactDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const { contact, loading, error, addNote } = useContactDetail(id);
-  const [note, setNote] = useState('');
+  const { user } = useAuth();
+  const { contact, loading, error, addNote, deleteNote, addActivity, confirmActivity, deleteActivity } =
+    useContactDetail(id);
+  const [logText, setLogText] = useState('');
+  const [logType, setLogType] = useState('NOTE');
   const [tab, setTab] = useState<DetailTab>('activity');
-  const [savingNote, setSavingNote] = useState(false);
+  const [activityFilter, setActivityFilter] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [savingLog, setSavingLog] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
-  const handleAddNote = async (e: FormEvent) => {
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'EDITOR';
+
+  const handleAddLog = async (e: FormEvent) => {
     e.preventDefault();
-    if (!note.trim()) return;
-    setSavingNote(true);
+    if (!logText.trim()) return;
+    setSavingLog(true);
     try {
-      await addNote(note.trim());
-      setNote('');
+      if (logType === 'NOTE') {
+        await addNote(logText.trim());
+      } else {
+        await addActivity(logType, logText.trim(), !(logType === 'CALL' || logType === 'EMAIL'));
+      }
+      setLogText('');
     } finally {
-      setSavingNote(false);
+      setSavingLog(false);
     }
   };
 
-  if (loading) return <p className="text-on-surface-variant">Loading…</p>;
-  if (error || !contact) return <p className="text-error">{error ?? 'Contact not found'}</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-on-surface-variant">
+        Loading…
+      </div>
+    );
+  }
 
-  const address = [contact.street, contact.city, contact.postalCode, contact.country].filter(Boolean).join(', ');
+  if (error || !contact) {
+    return <p className="text-error">{error ?? 'Contact not found'}</p>;
+  }
+
+  const address = [contact.street, contact.city, contact.postalCode, contact.country]
+    .filter(Boolean)
+    .join(', ');
   const roleLine = [contact.jobTitle, contact.company].filter(Boolean).join(' at ');
+  const userInitials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : 'U';
 
   return (
     <div>
       <Link
         href="/contacts"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-on-surface-variant transition-colors hover:text-primary"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-on-surface-variant transition-colors hover:text-primary"
       >
-        <span className="material-symbols-outlined text-xl">arrow_back</span>
+        <ArrowLeft className="h-4 w-4" />
         Back to Directory
       </Link>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-6">
-        <div className="flex flex-col gap-6 lg:col-span-4">
-          <Card className="relative overflow-hidden p-0 text-center">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="flex flex-col gap-4 lg:col-span-4">
+          <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant">
             <div
-              className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-surface-container-high to-surface-container opacity-50"
+              className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary-container to-secondary-container opacity-60"
               aria-hidden
             />
-            <div className="relative px-6 pb-6 pt-4">
-              <div className="relative z-10 mx-auto mt-2 w-fit rounded-full border-4 border-surface-container-lowest shadow-sm">
+            <div className="relative px-6 pb-6 pt-4 text-center">
+              <div className="mx-auto mt-2 w-fit rounded-full border-4 border-surface-container-lowest shadow-sm">
                 <Avatar name={contact.fullName} src={contact.avatarUrl} size="xl" />
               </div>
-              <h1 className="relative z-10 mt-4 font-headline-md text-on-surface">{contact.fullName}</h1>
-              {roleLine && (
-                <p className="relative z-10 mt-1 text-base text-on-surface-variant">{roleLine}</p>
-              )}
+              <h1 className="mt-4 text-xl font-bold text-on-surface">{contact.fullName}</h1>
+              {roleLine && <p className="mt-1 text-sm text-on-surface-variant">{roleLine}</p>}
 
-              <div className="relative z-10 mt-6 flex w-full gap-3">
+              <div className="mt-6 flex gap-2">
                 {contact.phone ? (
                   <a
                     href={`tel:${contact.phone}`}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-3 py-3 text-sm font-medium text-on-primary transition-colors hover:bg-[#0f273f]"
+                    onClick={() =>
+                      void addActivity('CALL', `Call started with ${contact.fullName}`, false)
+                    }
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-container py-2.5 text-sm font-medium text-on-primary transition-colors hover:opacity-90"
                   >
-                    <span className="material-symbols-outlined text-xl">call</span>
+                    <Phone className="h-4 w-4" />
                     Call
                   </a>
                 ) : (
-                  <Button variant="primary" className="flex-1 py-3" disabled>
+                  <button
+                    disabled
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface-container py-2.5 text-sm text-on-surface-variant"
+                  >
+                    <Phone className="h-4 w-4" />
                     Call
-                  </Button>
+                  </button>
                 )}
                 <a
                   href={`mailto:${contact.email}`}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-high px-3 py-3 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container"
+                  onClick={() =>
+                    void addActivity('EMAIL', `Email started with ${contact.fullName}`, false)
+                  }
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container"
                 >
-                  <span className="material-symbols-outlined text-xl">mail</span>
+                  <Mail className="h-4 w-4" />
                   Email
                 </a>
-                <Link
-                  href={`/contacts/${id}/edit`}
-                  className="flex w-12 shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-colors hover:bg-surface-container-low"
-                  aria-label="Edit contact"
+                <a
+                  href="#"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container lg:hidden"
                 >
-                  <span className="material-symbols-outlined text-xl">edit</span>
-                </Link>
+                  <Calendar className="h-4 w-4" />
+                  Schedule
+                </a>
+                {canEdit && (
+                  <Link
+                    href={`/contacts/${id}/edit`}
+                    className="flex w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-colors hover:bg-surface-container-low"
+                    aria-label="Edit contact"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Link>
+                )}
               </div>
 
-              <div className="relative z-10 mt-6 flex w-full flex-col gap-4 text-left">
-                {contact.phone && (
-                  <ProfileField label="Direct line">{contact.phone}</ProfileField>
-                )}
-                <ProfileField label="Work email">
+              <div className="mt-6 space-y-4 text-left">
+                {contact.phone && <ProfileField label="Direct Line">{contact.phone}</ProfileField>}
+                <ProfileField label="Work Email">
                   <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
                     {contact.email}
                   </a>
@@ -142,28 +199,27 @@ export default function ContactDetailPage() {
                 {address && <ProfileField label="Location">{address}</ProfileField>}
               </div>
             </div>
-          </Card>
+          </div>
 
-          {contact.tags.length > 0 && (
-            <Card>
-              <h2 className="mb-3 text-sm font-bold text-on-surface">Segmentation tags</h2>
+          <div className="rounded-xl bg-surface-container-lowest p-5 shadow-sm ring-1 ring-outline-variant">
+            <h2 className="mb-3 text-sm font-bold text-on-surface">Segmentation Tags</h2>
+            {contact.tags.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {contact.tags.map((t) => (
                   <Chip key={t.id} label={t.name} />
                 ))}
               </div>
-            </Card>
-          )}
+            ) : (
+              <p className="text-xs text-on-surface-variant">No tags assigned.</p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col lg:col-span-8">
-          <Card className="flex flex-1 flex-col overflow-hidden p-0">
-            <div className="flex border-b border-outline-variant bg-surface">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm ring-1 ring-outline-variant">
+            <div className="flex border-b border-outline-variant">
               <DetailTabButton active={tab === 'activity'} onClick={() => setTab('activity')}>
                 Activity Log
-              </DetailTabButton>
-              <DetailTabButton active={tab === 'notes'} onClick={() => setTab('notes')}>
-                Notes
               </DetailTabButton>
               <DetailTabButton active={tab === 'company'} onClick={() => setTab('company')}>
                 Company Intel
@@ -173,107 +229,197 @@ export default function ContactDetailPage() {
             <div className="flex-1 overflow-y-auto p-6">
               {tab === 'activity' && (
                 <>
-                  <h2 className="mb-6 text-xl font-semibold text-on-surface">Recent interactions</h2>
-                  {contact.activities.length === 0 ? (
-                    <p className="text-sm text-on-surface-variant">No activities logged yet.</p>
-                  ) : (
-                    <ul className="relative flex flex-col gap-8 border-l-2 border-surface-container-high pl-6">
-                      {contact.activities.map((item, index) => (
-                        <li key={item.id} className="relative">
-                          <span
-                            className={`absolute -left-[31px] top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-surface-container-lowest ${
-                              index === 0 ? 'border-primary' : 'border-outline-variant'
-                            }`}
-                            aria-hidden
-                          >
-                            <span
-                              className={`h-2 w-2 rounded-full ${index === 0 ? 'bg-primary' : 'bg-outline-variant'}`}
-                            />
-                          </span>
-                          <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-bold text-on-surface">{item.title}</span>
-                              <span className="text-xs text-outline">{formatWhen(item.occurredAt)}</span>
-                            </div>
-                            {item.description && (
-                              <p className="mt-2 rounded-lg border border-outline-variant/50 bg-surface-container-low p-3 text-sm text-on-surface-variant">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-
-              {tab === 'notes' && (
-                <>
-                  <h2 className="mb-6 text-xl font-semibold text-on-surface">Notes</h2>
-                  {contact.notes.length === 0 ? (
-                    <p className="text-sm text-on-surface-variant">No notes yet. Add one below.</p>
-                  ) : (
-                    <ul className="space-y-4">
-                      {contact.notes.map((item) => (
-                        <li
-                          key={item.id}
-                          className="rounded-lg border border-outline-variant/50 border-l-4 border-l-secondary bg-surface p-4 text-sm text-on-surface-variant"
-                        >
-                          <p>{item.body}</p>
-                          <p className="mt-2 text-xs text-outline">{formatWhen(item.createdAt)}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-on-surface">Recent Interactions</h2>
+                    <div className="relative" ref={filterRef}>
+                      <button
+                        type="button"
+                        onClick={() => setFilterOpen((v) => !v)}
+                        className="flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-1.5 text-sm text-on-surface-variant transition-colors hover:bg-surface-container"
+                      >
+                        <Filter className="h-3.5 w-3.5" />
+                        Filter
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </button>
+                      {filterOpen && (
+                        <div className="absolute right-0 z-10 mt-1 w-36 rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg">
+                          {ACTIVITY_FILTERS.map((f) => (
+                            <button
+                              key={f.value}
+                              type="button"
+                              onClick={() => {
+                                setActivityFilter(f.value);
+                                setFilterOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-surface-container ${
+                                activityFilter === f.value
+                                  ? 'font-semibold text-primary'
+                                  : 'text-on-surface'
+                              }`}
+                            >
+                              {f.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <ActivityTimeline
+                    activities={contact.activities}
+                    filter={activityFilter || undefined}
+                    canManage={canEdit}
+                    onConfirm={confirmActivity}
+                    onDelete={deleteActivity}
+                  />
+                  <div className="mt-6 border-t border-outline-variant pt-5">
+                    <h3 className="mb-3 text-sm font-semibold text-on-surface">Notes</h3>
+                    {contact.notes.length === 0 ? (
+                      <p className="text-sm text-on-surface-variant">No notes yet.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {[...contact.notes]
+                          .sort(
+                            (a, b) =>
+                              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                          )
+                          .map((item) => (
+                            <li
+                              key={item.id}
+                              className="rounded-xl border border-outline-variant bg-surface-container-low p-4"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-xs text-on-surface-variant">
+                                    {formatRelativeTime(item.createdAt)}
+                                  </p>
+                                  <p className="mt-1 text-sm text-on-surface">{item.body}</p>
+                                </div>
+                                {canEdit && (
+                                  <button
+                                    type="button"
+                                    onClick={() => void deleteNote(item.id)}
+                                    className="rounded-md border border-outline-variant p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container"
+                                    aria-label="Delete note"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
                 </>
               )}
 
               {tab === 'company' && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-on-surface">Company intel</h2>
-                  <p className="text-base font-medium text-on-surface">
-                    {contact.company ?? 'No company on file'}
-                  </p>
-                  {contact.jobTitle && (
-                    <p className="text-sm text-on-surface-variant">
-                      <span className="font-medium text-on-surface">Role:</span> {contact.jobTitle}
-                    </p>
-                  )}
-                  {address && (
-                    <p className="text-sm text-on-surface-variant">
-                      <span className="font-medium text-on-surface">Address:</span> {address}
-                    </p>
-                  )}
-                </div>
+                <CompanyIntelTab contact={contact} address={address} />
               )}
             </div>
 
-            {tab === 'notes' && (
+            {tab === 'activity' && canEdit && (
               <form
-                onSubmit={(e) => void handleAddNote(e)}
-                className="border-t border-outline-variant bg-surface-container-lowest p-4"
+                onSubmit={(e) => void handleAddLog(e)}
+                className="border-t border-outline-variant p-4"
               >
-                <label htmlFor="add-note" className="mb-2 block text-sm font-medium text-on-surface">
-                  Add note
-                </label>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <textarea
-                    id="add-note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    rows={3}
-                    placeholder="Write a note about this contact…"
-                    className="min-h-[88px] flex-1 resize-y rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/10"
-                  />
-                  <Button type="submit" disabled={savingNote || !note.trim()} className="shrink-0 sm:min-w-[96px]">
-                    {savingNote ? 'Saving…' : 'Save'}
-                  </Button>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-container text-xs font-bold text-on-primary">
+                    {userInitials}
+                  </div>
+                  <div className="flex flex-1 gap-2">
+                    <select
+                      value={logType}
+                      onChange={(e) => setLogType(e.target.value)}
+                      className="rounded-lg border border-outline-variant bg-surface-container-low px-2 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      {ACTIVITY_FILTERS.filter((f) => f.value).map((f) => (
+                        <option key={f.value} value={f.value}>
+                          {f.label.slice(0, -1)}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={logText}
+                      onChange={(e) => setLogText(e.target.value)}
+                      placeholder={`Log ${logType.toLowerCase()} details...`}
+                      className="flex-1 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <Button type="submit" disabled={savingLog || !logText.trim()} className="shrink-0">
+                      {savingLog ? 'Saving…' : 'Add Log'}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
-          </Card>
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function CompanyIntelTab({
+  contact,
+  address,
+}: {
+  contact: { company: string | null; jobTitle: string | null; city: string | null; country: string | null };
+  address: string;
+}) {
+  const location = [contact.city, contact.country].filter(Boolean).join(', ');
+
+  if (!contact.company && !contact.jobTitle && !address) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
+        <Building2 className="mb-3 h-10 w-10 opacity-40" />
+        <p className="text-sm font-medium">No company information on file</p>
+        <p className="mt-1 text-xs">Edit the contact to add company details.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-surface-container-low p-5">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary-container">
+            <Building2 className="h-6 w-6 text-on-primary-container" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-on-surface">{contact.company ?? '—'}</h2>
+            {contact.jobTitle && (
+              <p className="mt-0.5 text-sm text-on-surface-variant">{contact.jobTitle}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-outline">Key Details</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <IntelField icon={MapPin} label="Location" value={location || '—'} />
+          <IntelField icon={Building2} label="Status" value="Active Contact" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IntelField({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-surface-container-low p-3">
+      <Icon className="h-4 w-4 flex-shrink-0 text-on-surface-variant" />
+      <div>
+        <p className="text-xs text-on-surface-variant">{label}</p>
+        <p className="text-sm font-medium text-on-surface">{value}</p>
       </div>
     </div>
   );

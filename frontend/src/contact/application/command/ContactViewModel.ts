@@ -6,8 +6,9 @@ export interface TagViewModel {
 export interface NoteViewModel {
   id: string;
   body: string;
-  authorId: string;
+  authorUserId: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ActivityViewModel {
@@ -17,6 +18,7 @@ export interface ActivityViewModel {
   authorUserId: string | null;
   occurredAt: string;
   createdAt: string;
+  confirmed: boolean;
 }
 
 export interface ContactViewModel {

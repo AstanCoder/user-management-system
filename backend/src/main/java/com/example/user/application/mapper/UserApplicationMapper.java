@@ -25,5 +25,6 @@ public interface UserApplicationMapper {
     @Mapping(target = "status", expression = "java(user.status())")
     @Mapping(target = "createdAt", expression = "java(user.createdAt())")
     @Mapping(target = "updatedAt", expression = "java(user.updatedAt())")
+    @Mapping(target = "lastActiveAt", expression = "java(user.lastActiveAt())")
     UserResult toResult(User user);
 }

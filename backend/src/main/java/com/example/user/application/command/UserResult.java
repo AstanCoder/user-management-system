@@ -22,4 +22,5 @@ public class UserResult {
     UserStatus status;
     Instant createdAt;
     Instant updatedAt;
+    Instant lastActiveAt;
 }

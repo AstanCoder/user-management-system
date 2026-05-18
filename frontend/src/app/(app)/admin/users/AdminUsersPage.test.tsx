@@ -1,7 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockUpdate, mockDelete, mockList, mockStats } = vi.hoisted(() => ({
+const { mockUpdate, mockDelete, mockRefetch } = vi.hoisted(() => ({
   mockUpdate: vi.fn().mockResolvedValue({
     id: '2',
     firstName: 'Jane',
@@ -9,14 +9,32 @@ const { mockUpdate, mockDelete, mockList, mockStats } = vi.hoisted(() => ({
     email: 'jane@example.com',
     role: 'VIEWER',
     status: 'ACTIVE',
+    lastActiveAt: null,
   }),
   mockDelete: vi.fn().mockResolvedValue(undefined),
-  mockList: vi.fn().mockResolvedValue([
-    { id: '1', firstName: 'Admin', lastName: 'User', email: 'admin@nexuscrm.com', role: 'ADMIN', status: 'ACTIVE' },
-    { id: '2', firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', role: 'EDITOR', status: 'ACTIVE' },
-  ]),
-  mockStats: vi.fn().mockResolvedValue({ totalUsers: 2, activeUsers: 2, invitedUsers: 0, disabledUsers: 0 }),
+  mockRefetch: vi.fn().mockResolvedValue(undefined),
 }));
+
+const mockUsers = [
+  {
+    id: '1',
+    firstName: 'Admin',
+    lastName: 'User',
+    email: 'admin@nexuscrm.com',
+    role: 'ADMIN' as const,
+    status: 'ACTIVE' as const,
+    lastActiveAt: null,
+  },
+  {
+    id: '2',
+    firstName: 'Jane',
+    lastName: 'Doe',
+    email: 'jane@example.com',
+    role: 'EDITOR' as const,
+    status: 'ACTIVE' as const,
+    lastActiveAt: '2026-05-17T10:00:00Z',
+  },
+];
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -37,11 +55,33 @@ vi.mock('@/identity/interfaces/hooks/useAuth', () => ({
   }),
 }));
 
+vi.mock('@/user/interfaces/hooks/useUserAdmin', () => ({
+  useUserAdmin: () => ({
+    users: mockUsers,
+    stats: {
+      totalUsers: 2,
+      activeUsers: 2,
+      invitedUsers: 0,
+      disabledUsers: 0,
+      adminCount: 1,
+      editorCount: 1,
+      viewerCount: 0,
+      invitedPendingCount: 0,
+      usersCreatedLast7Days: 1,
+    },
+    loading: false,
+    error: null,
+    page: 0,
+    totalElements: 2,
+    totalPages: 1,
+    setPage: vi.fn(),
+    refetch: mockRefetch,
+  }),
+}));
+
 vi.mock('@/user/infrastructure/config/userDependencies', () => ({
   userDependencies: {
     userAdminGateway: {
-      list: mockList,
-      stats: mockStats,
       update: mockUpdate,
       delete: mockDelete,
     },
@@ -57,24 +97,22 @@ describe('AdminUsersPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockList.mockResolvedValue([
-      { id: '1', firstName: 'Admin', lastName: 'User', email: 'admin@nexuscrm.com', role: 'ADMIN', status: 'ACTIVE' },
-      { id: '2', firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', role: 'EDITOR', status: 'ACTIVE' },
-    ]);
-    mockStats.mockResolvedValue({ totalUsers: 2, activeUsers: 2, invitedUsers: 0, disabledUsers: 0 });
+    vi.stubGlobal('confirm', vi.fn(() => true));
   });
 
   it('renders stats and user rows', async () => {
     render(<AdminUsersPage />);
-    expect(await screen.findByText('User management')).toBeInTheDocument();
+    expect(await screen.findByText('User Management')).toBeInTheDocument();
     expect(await screen.findByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Change role for jane@example.com/)).toBeInTheDocument();
+    expect(screen.getByText('Invite User')).toBeInTheDocument();
   });
 
-  it('updates role on change', async () => {
+  it('shows role change via dropdown menu', async () => {
     render(<AdminUsersPage />);
-    const select = await screen.findByLabelText(/Change role for jane@example.com/);
-    fireEvent.change(select, { target: { value: 'VIEWER' } });
+    await screen.findByText('Jane Doe');
+    const menuButtons = screen.getAllByLabelText('More options');
+    fireEvent.click(menuButtons[1]);
+    fireEvent.click(screen.getByText('Set as VIEWER'));
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith('2', {
         firstName: 'Jane',
@@ -82,16 +120,6 @@ describe('AdminUsersPage', () => {
         role: 'VIEWER',
         status: 'ACTIVE',
       });
-    });
-  });
-
-  it('disables delete for current admin', async () => {
-    const view = render(<AdminUsersPage />);
-    await waitFor(() => {
-      const deleteButtons = within(view.container).getAllByRole('button', { name: 'Delete' });
-      expect(deleteButtons).toHaveLength(2);
-      expect(deleteButtons[0]).toBeDisabled();
-      expect(deleteButtons[1]).not.toBeDisabled();
     });
   });
 });

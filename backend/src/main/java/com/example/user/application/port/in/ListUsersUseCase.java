@@ -1,17 +1,18 @@
 package com.example.user.application.port.in;
 
-import com.example.user.application.command.UserResult;
-import java.util.List;
+import com.example.user.application.command.UserPageResult;
+import com.example.user.application.command.UserSearchQuery;
 
 /**
- * Lists all users for administration.
+ * Lists users for administration with pagination and search.
  */
 public interface ListUsersUseCase {
 
     /**
-     * Returns all users.
+     * Returns a paginated list of users matching the query.
      *
-     * @return user results
+     * @param query page, size, and optional search term
+     * @return paginated user results
      */
-    List<UserResult> execute();
+    UserPageResult execute(UserSearchQuery query);
 }

@@ -10,7 +10,9 @@ import com.example.contact.domain.port.TagRepository;
 import com.example.contact.domain.valueobject.ContactId;
 import com.example.contact.domain.valueobject.TagId;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class AssignTagsService implements AssignTagsUseCase {
 
@@ -35,10 +37,14 @@ public final class AssignTagsService implements AssignTagsUseCase {
         if (tagNames == null) {
             return results;
         }
+        Set<String> uniqueTagNames = new LinkedHashSet<>();
         for (String name : tagNames) {
             if (name == null || name.isBlank()) {
                 continue;
             }
+            uniqueTagNames.add(name.trim());
+        }
+        for (String name : uniqueTagNames) {
             Tag tag = tagRepository
                     .findByName(name)
                     .orElseGet(() -> tagRepository.save(Tag.create(TagId.generate(), name)));

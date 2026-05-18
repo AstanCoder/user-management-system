@@ -51,4 +51,7 @@ public class UserJpaEntity {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "last_active_at")
+    private Instant lastActiveAt;
 }

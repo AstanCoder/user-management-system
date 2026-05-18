@@ -25,5 +25,6 @@ public interface LogActivityUseCase {
             UUID authorUserId,
             String activityType,
             String description,
-            Instant occurredAt);
+            Instant occurredAt,
+            boolean confirmed);
 }

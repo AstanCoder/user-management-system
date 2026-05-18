@@ -109,6 +109,7 @@ public interface ContactApplicationMapper {
         .authorUserId(activity.authorUserId())
         .occurredAt(activity.occurredAt())
         .createdAt(activity.createdAt())
+        .confirmed(activity.confirmed())
         .build();
   }
 

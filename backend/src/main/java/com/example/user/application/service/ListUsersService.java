@@ -1,14 +1,15 @@
 package com.example.user.application.service;
 
-import com.example.user.application.command.UserResult;
+import com.example.user.application.command.UserPageResult;
+import com.example.user.application.command.UserSearchQuery;
 import com.example.user.application.mapper.UserApplicationMapper;
 import com.example.user.application.port.in.ListUsersUseCase;
 import com.example.user.domain.port.UserRepository;
-import java.util.Comparator;
-import java.util.List;
+import com.example.user.domain.query.PagedUsers;
+import com.example.user.domain.query.UserListCriteria;
 
 /**
- * Lists all users from the repository.
+ * Lists users with pagination and optional search.
  */
 public final class ListUsersService implements ListUsersUseCase {
 
@@ -21,10 +22,15 @@ public final class ListUsersService implements ListUsersUseCase {
     }
 
     @Override
-    public List<UserResult> execute() {
-        return userRepository.findAll().stream()
-                .sorted(Comparator.comparing(com.example.user.domain.model.User::createdAt).reversed())
-                .map(userApplicationMapper::toResult)
-                .toList();
+    public UserPageResult execute(UserSearchQuery query) {
+        PagedUsers page = userRepository.findPage(
+                new UserListCriteria(query.getPage(), query.getSize(), query.getSearch()));
+        return UserPageResult.builder()
+                .content(page.content().stream().map(userApplicationMapper::toResult).toList())
+                .totalElements(page.totalElements())
+                .totalPages(page.totalPages())
+                .page(page.page())
+                .size(page.size())
+                .build();
     }
 }

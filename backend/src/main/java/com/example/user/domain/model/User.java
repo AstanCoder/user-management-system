@@ -17,6 +17,7 @@ public final class User {
     private UserStatus status;
     private final Instant createdAt;
     private Instant updatedAt;
+    private Instant lastActiveAt;
 
     private User(
             UserId id,
@@ -27,7 +28,8 @@ public final class User {
             Role role,
             UserStatus status,
             Instant createdAt,
-            Instant updatedAt) {
+            Instant updatedAt,
+            Instant lastActiveAt) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -37,6 +39,7 @@ public final class User {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.lastActiveAt = lastActiveAt;
     }
 
     /**
@@ -67,7 +70,8 @@ public final class User {
                 Objects.requireNonNull(role, "role must not be null"),
                 UserStatus.ACTIVE,
                 now,
-                now);
+                now,
+                null);
     }
 
     /**
@@ -91,7 +95,8 @@ public final class User {
                 Objects.requireNonNull(role, "role must not be null"),
                 UserStatus.INVITED,
                 now,
-                now);
+                now,
+                null);
     }
 
     /**
@@ -117,8 +122,18 @@ public final class User {
             Role role,
             UserStatus status,
             Instant createdAt,
-            Instant updatedAt) {
-        return new User(id, email, passwordHash, firstName, lastName, role, status, createdAt, updatedAt);
+            Instant updatedAt,
+            Instant lastActiveAt) {
+        return new User(
+                id, email, passwordHash, firstName, lastName, role, status, createdAt, updatedAt, lastActiveAt);
+    }
+
+    /**
+     * Records the current time as last active.
+     */
+    public void recordLastActiveAt() {
+        this.lastActiveAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -198,5 +213,9 @@ public final class User {
 
     public Instant updatedAt() {
         return updatedAt;
+    }
+
+    public Instant lastActiveAt() {
+        return lastActiveAt;
     }
 }

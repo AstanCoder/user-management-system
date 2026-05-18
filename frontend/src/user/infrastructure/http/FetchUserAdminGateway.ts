@@ -1,24 +1,40 @@
 import { apiFetch, parseApiError } from '@/shared/lib/apiFetch';
 import {
+  InviteUserPayload,
   UpdateUserPayload,
   UserAdminGateway,
   UserDto,
+  UserListParams,
+  UserPageDto,
   UserStatsDto,
 } from '../../domain/port/UserAdminGateway';
 
 export class FetchUserAdminGateway implements UserAdminGateway {
   constructor(private readonly baseUrl: string) {}
 
-  async list(): Promise<UserDto[]> {
-    const response = await apiFetch(this.baseUrl, '/api/users');
+  async list(params: UserListParams): Promise<UserPageDto> {
+    const query = new URLSearchParams();
+    query.set('page', String(params.page ?? 0));
+    query.set('size', String(params.size ?? 20));
+    if (params.search) query.set('search', params.search);
+    const response = await apiFetch(this.baseUrl, `/api/users?${query}`);
     if (!response.ok) throw new Error(await parseApiError(response));
-    return (await response.json()) as UserDto[];
+    return (await response.json()) as UserPageDto;
   }
 
   async stats(): Promise<UserStatsDto> {
     const response = await apiFetch(this.baseUrl, '/api/users/stats');
     if (!response.ok) throw new Error(await parseApiError(response));
     return (await response.json()) as UserStatsDto;
+  }
+
+  async invite(payload: InviteUserPayload): Promise<UserDto> {
+    const response = await apiFetch(this.baseUrl, '/api/users/invite', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await parseApiError(response));
+    return (await response.json()) as UserDto;
   }
 
   async update(id: string, payload: UpdateUserPayload): Promise<UserDto> {

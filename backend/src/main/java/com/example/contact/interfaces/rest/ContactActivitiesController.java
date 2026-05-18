@@ -1,8 +1,11 @@
 package com.example.contact.interfaces.rest;
 
 import com.example.contact.application.command.ActivityResult;
+import com.example.contact.application.port.in.ConfirmActivityUseCase;
+import com.example.contact.application.port.in.DeleteActivityUseCase;
 import com.example.contact.application.port.in.ListActivitiesUseCase;
 import com.example.contact.application.port.in.LogActivityUseCase;
+import com.example.contact.domain.valueobject.ActivityId;
 import com.example.contact.domain.valueobject.ContactId;
 import com.example.contact.interfaces.rest.dto.ActivityResponse;
 import com.example.contact.interfaces.rest.dto.LogActivityRequest;
@@ -14,7 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,11 +34,18 @@ public class ContactActivitiesController {
 
     private final LogActivityUseCase logActivityUseCase;
     private final ListActivitiesUseCase listActivitiesUseCase;
+    private final ConfirmActivityUseCase confirmActivityUseCase;
+    private final DeleteActivityUseCase deleteActivityUseCase;
 
     public ContactActivitiesController(
-            LogActivityUseCase logActivityUseCase, ListActivitiesUseCase listActivitiesUseCase) {
+            LogActivityUseCase logActivityUseCase,
+            ListActivitiesUseCase listActivitiesUseCase,
+            ConfirmActivityUseCase confirmActivityUseCase,
+            DeleteActivityUseCase deleteActivityUseCase) {
         this.logActivityUseCase = logActivityUseCase;
         this.listActivitiesUseCase = listActivitiesUseCase;
+        this.confirmActivityUseCase = confirmActivityUseCase;
+        this.deleteActivityUseCase = deleteActivityUseCase;
     }
 
     @GetMapping
@@ -52,8 +64,23 @@ public class ContactActivitiesController {
                 SecurityContextAccessor.currentUserId().value(),
                 request.getActivityType(),
                 request.getDescription(),
-                request.getOccurredAt());
+                request.getOccurredAt(),
+                request.getConfirmed() == null || request.getConfirmed());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(result));
+    }
+
+    @PatchMapping("/{activityId}/confirm")
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    public ActivityResponse confirm(@PathVariable String contactId, @PathVariable String activityId) {
+        ActivityResult result = confirmActivityUseCase.execute(ContactId.of(contactId), ActivityId.of(activityId));
+        return toResponse(result);
+    }
+
+    @DeleteMapping("/{activityId}")
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    public ResponseEntity<Void> delete(@PathVariable String contactId, @PathVariable String activityId) {
+        deleteActivityUseCase.execute(ContactId.of(contactId), ActivityId.of(activityId));
+        return ResponseEntity.noContent().build();
     }
 
     private ActivityResponse toResponse(ActivityResult result) {
@@ -64,6 +91,7 @@ public class ContactActivitiesController {
                 .authorUserId(result.getAuthorUserId())
                 .occurredAt(result.getOccurredAt())
                 .createdAt(result.getCreatedAt())
+                .confirmed(result.isConfirmed())
                 .build();
     }
 }

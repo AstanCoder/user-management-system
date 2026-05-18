@@ -1,14 +1,19 @@
 package com.example.contact.interfaces.rest.exception;
 
+import com.example.contact.domain.exception.ActivityAlreadyConfirmedException;
+import com.example.contact.domain.exception.ActivityDeletionNotAllowedException;
+import com.example.contact.domain.exception.ActivityNotFoundException;
 import com.example.contact.domain.exception.ContactNotFoundException;
 import com.example.contact.domain.exception.DuplicateEmailException;
 import com.example.contact.domain.exception.InvalidContactDataException;
+import com.example.contact.domain.exception.NoteNotFoundException;
 import com.example.contact.interfaces.rest.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -63,6 +68,11 @@ public class ContactExceptionHandler {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler({ActivityNotFoundException.class, NoteNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(RuntimeException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
+    }
+
     /**
      * Handles duplicate email conflicts.
      *
@@ -73,6 +83,24 @@ public class ContactExceptionHandler {
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateEmailException ex, HttpServletRequest request) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(ActivityAlreadyConfirmedException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyConfirmed(
+            ActivityAlreadyConfirmedException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(ActivityDeletionNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleDeletionNotAllowed(
+            ActivityDeletionNotAllowedException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, "Malformed JSON request body", request, null);
     }
 
     /**

@@ -5,6 +5,7 @@ import com.example.contact.domain.port.NoteRepository;
 import com.example.contact.domain.valueobject.ContactId;
 import com.example.contact.domain.valueobject.NoteId;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,9 +25,19 @@ public class JpaNoteRepositoryAdapter implements NoteRepository {
     }
 
     @Override
+    public Optional<Note> findById(NoteId noteId) {
+        return repository.findById(noteId.value()).map(this::toDomain);
+    }
+
+    @Override
     public Note save(Note note) {
         NoteJpaEntity saved = repository.save(toEntity(note));
         return toDomain(saved);
+    }
+
+    @Override
+    public void delete(NoteId noteId) {
+        repository.deleteById(noteId.value());
     }
 
     private Note toDomain(NoteJpaEntity entity) {

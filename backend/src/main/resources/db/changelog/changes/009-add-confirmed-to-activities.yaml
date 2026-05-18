@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-add-confirmed-to-activities
+      author: nexus-crm-expansion
+      changes:
+        - addColumn:
+            tableName: activities
+            columns:
+              - column:
+                  name: confirmed
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropColumn:
+            tableName: activities
+            columnName: confirmed
