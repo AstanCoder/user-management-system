@@ -34,6 +34,9 @@ docker compose -f docker/docker-compose.yml up --build
 | Frontend | http://localhost:3000/login |
 | Backend API | http://localhost:8080/api |
 | Mailhog (captured email) | http://localhost:8025 |
+| MinIO API | http://localhost:9000 |
+| MinIO Console | http://localhost:9001 |
+| imgproxy | http://localhost:8082 |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8080/api-docs |
 
@@ -147,12 +150,74 @@ Base path: `/api`. Details and schemas: Swagger UI.
 
 Request bodies for contacts are validated and sanitized (trim names, lowercase email).
 
+## End-to-end use cases (frontend -> backend)
+
+### 1) Auth login
+
+- Frontend page: `/login` (`frontend/src/app/(auth)/login/page.tsx`).
+- Client flow: React Query mutation calls `identityDependencies.loginUseCase`, then invalidates `authQueryKeys.session` and redirects to `/contacts`.
+- HTTP layer: `FetchAuthGateway.login()` -> `POST /api/auth/login`.
+- Backend flow: `AuthController.login()` -> `LoginUseCase` -> JWT response; frontend stores session (`nexus_auth`) and cookie `nexus_auth=1`.
+
+### 2) Contact listing, search, and advanced filters
+
+- Frontend page: `/contacts` (`frontend/src/app/(app)/contacts/page.tsx`).
+- UX flow: debounced text search + advanced filters (email, phone, comma-separated tags) + pagination controls.
+- Hook/gateway: `useContactDirectory()` -> `contactGateway.listPaged()` with `search`, `email`, `phone`, repeated `tagNames`, `page`, `size`.
+- Backend flow: `GET /api/contacts` in `ContactController.list()` -> `ListContactsUseCase` with `ContactSearchQuery`.
+
+### 3) Contact detail loading
+
+- Frontend page: `/contacts/[id]` (`frontend/src/app/(app)/contacts/[id]/page.tsx`).
+- Hook: `useContactDetail(contactId)` loads base contact via `contactGateway.getById()`.
+- Backend flow: `GET /api/contacts/{id}` in `ContactController.getById()`.
+- Returned model includes mapped `avatarUrl`, tags, and recent activity state used by detail UI.
+
+### 4) Activities pagination, filter, and infinite scroll
+
+- Frontend page: `/contacts/[id]` activity tab with `IntersectionObserver` sentinel for auto-load.
+- Hook: `useInfiniteQuery` in `useContactDetail()` calls `contactGateway.listActivities(contactId, { page, size: 10, activityType })`.
+- Backend flow: `GET /api/contacts/{contactId}/activities?page=&size=&activityType=` in `ContactActivitiesController.list()`.
+- Behavior: filter changes query key (`contactId + activityType`) and resets paging; scrolling loads next page until `totalPages` is reached.
+
+### 5) Tags assignment
+
+- Frontend pages: create/edit contact forms (`/contacts/new`, `/contacts/[id]/edit`) submit `tags` list.
+- HTTP layer: `contactGateway.assignTags(contactId, tagNames)` -> `PUT /api/contacts/{contactId}/tags`.
+- Backend flow: `ContactTagsController.assign()` -> `AssignTagsUseCase`.
+- Contract: tag names are sent as `{"tagNames":["..."]}` and backend returns resolved tag set for the contact.
+
+### 6) Avatar upload and serving via MinIO + imgproxy signed URL
+
+- Frontend pages: create/edit contact forms upload image file and call `contactGateway.uploadAvatar(contactId, file)`.
+- HTTP layer: `POST /api/contacts/{id}/avatar` (`multipart/form-data`, field `file`).
+- Backend storage flow:
+  - `ContactController.uploadAvatar()` delegates to upload use case.
+  - `MinioAvatarStorageAdapter` stores object as `minio://<bucket>/avatars/<contactId>.<ext>`.
+  - `AvatarUrlRestMapper` resolves persisted value with `ResolveAvatarUrlPort`.
+  - `ImgproxyAvatarUrlResolverAdapter` signs `/rs:fill:256:256:0/<encoded-s3-source>.webp` and returns `APP_IMGPROXY_BASE_URL/<signature>/...`.
+- Runtime dependencies: `docker/docker-compose.yml` includes `minio`, `minio-init`, and `imgproxy`; backend receives `APP_AVATAR_*` and `APP_IMGPROXY_*`.
+
+### 7) User admin invitation, resend, and complete
+
+- Invite flow:
+  - Frontend page: `/admin/users/invite`.
+  - API call: `POST /api/users/invite`.
+  - Backend: `UserController.invite()` sends invitation email with tokenized activation link.
+- Resend flow:
+  - Frontend page: `/admin/users` action menu for `INVITED` users.
+  - API call: `POST /api/users/{id}/resend-invitation`.
+  - Backend: `UserController.resendInvitation()`.
+- Complete invitation flow:
+  - Frontend page: `/accept-invitation?token=...`.
+  - API call: `POST /api/auth/complete-invitation`.
+  - Backend: `AuthController.completeInvitation()` activates account and returns JWT session.
+
 ## Tests
 
 ```bash
 ./gradlew :backend:test
-cd frontend && npm test
-cd frontend && npm run typecheck && npm run lint
+cd frontend && npm run typecheck && npm run lint && npm test
 ```
 
 Hexagonal dependency rules are enforced in `backend/src/test/java/com/example/architecture/HexagonalArchitectureTest.java`.

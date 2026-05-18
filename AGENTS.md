@@ -132,6 +132,48 @@ Automated browser tests must set both storage and cookie if they bypass the logi
 
 Method-level `@PreAuthorize` on controllers is authoritative.
 
+## Critical end-to-end flows (frontend -> backend)
+
+### Auth and session bootstrap
+
+- `/login` calls `POST /api/auth/login`, stores `nexus_auth`, and redirects to `/contacts`.
+- `/accept-invitation?token=...` calls `POST /api/auth/complete-invitation` and behaves like login on success.
+- `/api/auth/me` powers current session/profile refresh in authenticated layouts.
+
+### Contact directory with advanced filters
+
+- `/contacts` uses `useContactDirectory()` -> `contactGateway.listPaged()` -> `GET /api/contacts`.
+- Supported query params: `search`, `email`, `phone`, repeated `tagNames`, `page`, `size`, optional `sort`.
+- Pagination is server-driven (`totalElements`, `totalPages`, `page`, `size`).
+
+### Contact detail + activities timeline
+
+- `/contacts/[id]` loads base contact from `GET /api/contacts/{id}`.
+- Activities tab uses infinite query against `GET /api/contacts/{contactId}/activities?page=&size=10&activityType=`.
+- Infinite scroll is IntersectionObserver-based; stops when `nextPage >= totalPages`.
+- Activity actions:
+  - log: `POST /api/contacts/{contactId}/activities`
+  - confirm: `PATCH /api/contacts/{contactId}/activities/{activityId}/confirm`
+  - delete: `DELETE /api/contacts/{contactId}/activities/{activityId}`
+
+### Tags assignment
+
+- Contact create/edit submits tags via `PUT /api/contacts/{contactId}/tags` with `{"tagNames":[...]}`.
+- Keep UI and backend in sync by invalidating both detail and directory query keys after mutations.
+
+### Avatar upload + delivery pipeline (MinIO + imgproxy)
+
+- Upload endpoint: `POST /api/contacts/{id}/avatar` (`multipart/form-data`, field name `file`).
+- Storage adapter: `MinioAvatarStorageAdapter` writes `minio://<bucket>/avatars/<contactId>.<ext>`.
+- URL resolver: `ImgproxyAvatarUrlResolverAdapter` signs imgproxy URLs from S3/MinIO source and returns public transformed URL.
+- Compose stack requirements: `minio`, `minio-init`, `imgproxy` must be up; backend env must include `APP_AVATAR_*` and `APP_IMGPROXY_*`.
+
+### User administration: invite, resend, complete
+
+- Admin invite page calls `POST /api/users/invite`.
+- Admin users table can resend only for `INVITED` records: `POST /api/users/{id}/resend-invitation`.
+- Invite acceptance is completed by `/accept-invitation` -> `POST /api/auth/complete-invitation`.
+
 ## Common failure modes
 
 | Symptom | Likely cause |
