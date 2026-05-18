@@ -13,8 +13,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.springframework.transaction.annotation.Transactional;
 
-public final class AssignTagsService implements AssignTagsUseCase {
+public class AssignTagsService implements AssignTagsUseCase {
 
     private final ContactRepository contactRepository;
     private final TagRepository tagRepository;
@@ -28,6 +29,7 @@ public final class AssignTagsService implements AssignTagsUseCase {
     }
 
     @Override
+    @Transactional
     public List<TagResult> execute(ContactId contactId, List<String> tagNames) {
         if (contactRepository.findById(contactId).isEmpty()) {
             throw new ContactNotFoundException(contactId);

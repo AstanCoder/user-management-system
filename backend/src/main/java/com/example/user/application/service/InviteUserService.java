@@ -1,5 +1,6 @@
 package com.example.user.application.service;
 
+import com.example.identity.domain.port.InvitationTokenRepository;
 import com.example.user.application.command.InviteUserCommand;
 import com.example.user.application.command.UserResult;
 import com.example.user.application.mapper.UserApplicationMapper;
@@ -17,14 +18,17 @@ import java.util.UUID;
 public final class InviteUserService implements InviteUserUseCase {
 
     private final UserRepository userRepository;
+    private final InvitationTokenRepository invitationTokenRepository;
     private final UserInvitationEmailSender invitationEmailSender;
     private final UserApplicationMapper userApplicationMapper;
 
     public InviteUserService(
             UserRepository userRepository,
+            InvitationTokenRepository invitationTokenRepository,
             UserInvitationEmailSender invitationEmailSender,
             UserApplicationMapper userApplicationMapper) {
         this.userRepository = userRepository;
+        this.invitationTokenRepository = invitationTokenRepository;
         this.invitationEmailSender = invitationEmailSender;
         this.userApplicationMapper = userApplicationMapper;
     }
@@ -44,6 +48,7 @@ public final class InviteUserService implements InviteUserUseCase {
                 command.getLastName(),
                 command.getRole());
         User saved = userRepository.save(user);
+        invitationTokenRepository.save(saved.id(), token);
         invitationEmailSender.sendInvitation(saved.email(), saved.firstName(), token);
         return userApplicationMapper.toResult(saved);
     }

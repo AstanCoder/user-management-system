@@ -35,7 +35,6 @@ export function useAuth() {
         return null;
       }
     },
-    initialData: getStoredAuth(),
     staleTime: 60_000,
   });
 

@@ -60,6 +60,11 @@ export function useUserAdmin(options: UseUserAdminOptions = {}) {
     onSuccess: invalidateUsers,
   });
 
+  const resendInvitationMutation = useMutation({
+    mutationFn: async (id: string) => userDependencies.userAdminGateway.resendInvitation(id),
+    onSuccess: invalidateUsers,
+  });
+
   return {
     users: usersQuery.data?.content ?? [],
     stats: statsQuery.data ?? null,
@@ -79,5 +84,6 @@ export function useUserAdmin(options: UseUserAdminOptions = {}) {
       updateUserMutation.mutateAsync({ id, payload }),
     deleteUser: async (id: string) => deleteUserMutation.mutateAsync(id),
     inviteUser: async (payload: InviteUserPayload) => inviteUserMutation.mutateAsync(payload),
+    resendInvitation: async (id: string) => resendInvitationMutation.mutateAsync(id),
   };
 }

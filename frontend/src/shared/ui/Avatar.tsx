@@ -1,11 +1,19 @@
 export interface AvatarProps {
-  name: string;
+  name?: string | null;
   src?: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+function normalizeName(name?: string | null): string {
+  if (typeof name !== 'string') {
+    return '';
+  }
+  return name.trim();
+}
+
+function initials(name?: string | null): string {
+  const normalizedName = normalizeName(name);
+  const parts = normalizedName.split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
     return '?';
   }
@@ -23,11 +31,14 @@ const sizeClasses = {
 };
 
 export function Avatar({ name, src, size = 'md' }: AvatarProps) {
+  const normalizedName = normalizeName(name);
+  const alt = normalizedName || 'Avatar';
+
   if (src) {
     return (
       <img
         src={src}
-        alt={name}
+        alt={alt}
         className={`${sizeClasses[size]} shrink-0 rounded-full object-cover border border-outline-variant`}
       />
     );

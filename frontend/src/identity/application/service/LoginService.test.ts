@@ -14,6 +14,7 @@ describe('LoginService', () => {
         role: 'ADMIN',
       }),
       register: vi.fn(),
+      completeInvitation: vi.fn(),
       getCurrentUser: vi.fn(),
       forgotPassword: vi.fn(),
       resetPassword: vi.fn(),

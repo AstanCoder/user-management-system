@@ -21,3 +21,5 @@ databaseChangeLog:
       file: db/changelog/changes/010-allow-null-password-hash-for-invited-users.yaml
   - include:
       file: db/changelog/changes/011-enforce-password-hash-for-non-invited-users.yaml
+  - include:
+      file: db/changelog/changes/012-create-invitation-tokens.yaml

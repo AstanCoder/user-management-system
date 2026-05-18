@@ -1,9 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockUpdateUser, mockDeleteUser, mockRefetch } = vi.hoisted(() => ({
+const { mockUpdateUser, mockDeleteUser, mockResendInvitation, mockRefetch } = vi.hoisted(() => ({
   mockUpdateUser: vi.fn().mockResolvedValue(undefined),
   mockDeleteUser: vi.fn().mockResolvedValue(undefined),
+  mockResendInvitation: vi.fn().mockResolvedValue(undefined),
   mockRefetch: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -23,7 +24,7 @@ const mockUsers = [
     lastName: 'Doe',
     email: 'jane@example.com',
     role: 'EDITOR' as const,
-    status: 'ACTIVE' as const,
+    status: 'INVITED' as const,
     lastActiveAt: '2026-05-17T10:00:00Z',
   },
 ];
@@ -70,6 +71,7 @@ vi.mock('@/user/interfaces/hooks/useUserAdmin', () => ({
     refetch: mockRefetch,
     updateUser: mockUpdateUser,
     deleteUser: mockDeleteUser,
+    resendInvitation: mockResendInvitation,
   }),
 }));
 
@@ -115,8 +117,19 @@ describe('AdminUsersPage', () => {
         firstName: 'Jane',
         lastName: 'Doe',
         role: 'VIEWER',
-        status: 'ACTIVE',
+        status: 'INVITED',
       });
+    });
+  });
+
+  it('resends invitation for invited user', async () => {
+    render(<AdminUsersPage />);
+    await screen.findByText('Jane Doe');
+    const menuButtons = screen.getAllByLabelText('More options');
+    fireEvent.click(menuButtons[1]);
+    fireEvent.click(screen.getByText('Resend invitation'));
+    await waitFor(() => {
+      expect(mockResendInvitation).toHaveBeenCalledWith('2');
     });
   });
 });

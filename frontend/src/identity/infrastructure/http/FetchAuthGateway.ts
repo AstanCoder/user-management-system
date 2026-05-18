@@ -54,6 +54,18 @@ export class FetchAuthGateway implements AuthGateway {
     return persist(toSession(dto));
   }
 
+  async completeInvitation(token: string, newPassword: string): Promise<AuthSession> {
+    const response = await apiFetch(this.baseUrl, '/api/auth/complete-invitation', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+    if (!response.ok) {
+      throw new Error(await parseApiError(response));
+    }
+    const dto = (await response.json()) as AuthApiResponse;
+    return persist(toSession(dto));
+  }
+
   async getCurrentUser(): Promise<AuthSession> {
     const response = await apiFetch(this.baseUrl, '/api/auth/me');
     if (!response.ok) {

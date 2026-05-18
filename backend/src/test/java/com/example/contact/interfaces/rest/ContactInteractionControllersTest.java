@@ -5,9 +5,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,6 +23,7 @@ import com.example.contact.application.port.in.DeleteNoteUseCase;
 import com.example.contact.application.port.in.ListActivitiesUseCase;
 import com.example.contact.application.port.in.ListNotesUseCase;
 import com.example.contact.application.port.in.LogActivityUseCase;
+import com.example.contact.infrastructure.config.CorsConfig;
 import com.example.contact.interfaces.rest.exception.ContactExceptionHandler;
 import com.example.identity.infrastructure.config.SecurityConfig;
 import com.example.identity.infrastructure.security.AuthenticatedUserPrincipal;
@@ -31,6 +34,7 @@ import com.example.shared.test.WebMvcTestSecurityConfig;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -49,7 +53,7 @@ import org.springframework.test.web.servlet.MockMvc;
                 @ComponentScan.Filter(
                         type = FilterType.ASSIGNABLE_TYPE,
                         classes = {JwtAuthenticationFilter.class, SecurityConfig.class}))
-@Import({ContactExceptionHandler.class, WebMvcTestSecurityConfig.class})
+@Import({ContactExceptionHandler.class, CorsConfig.class, WebMvcTestSecurityConfig.class})
 class ContactInteractionControllersTest {
 
     @Autowired
@@ -128,6 +132,20 @@ class ContactInteractionControllersTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(activityId))
                 .andExpect(jsonPath("$.confirmed").value(true));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void confirmActivity_preflight_allowsPatchMethod() throws Exception {
+        String contactId = "fcd23632-d13c-45ab-8d1e-a2fbfd207ef6";
+        String activityId = UUID.randomUUID().toString();
+
+        mockMvc.perform(options("/api/contacts/{contactId}/activities/{activityId}/confirm", contactId, activityId)
+                        .header("Origin", "http://localhost:3000")
+                        .header("Access-Control-Request-Method", "PATCH"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
+                .andExpect(header().string("Access-Control-Allow-Methods", Matchers.containsString("PATCH")));
     }
 
     @Test

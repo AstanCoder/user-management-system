@@ -5,9 +5,11 @@ import com.example.identity.application.command.CurrentUserResult;
 import com.example.identity.application.port.in.ForgotPasswordUseCase;
 import com.example.identity.application.port.in.GetCurrentUserUseCase;
 import com.example.identity.application.port.in.LoginUseCase;
+import com.example.identity.application.port.in.CompleteInvitationUseCase;
 import com.example.identity.application.port.in.RegisterUseCase;
 import com.example.identity.application.port.in.ResetPasswordUseCase;
 import com.example.identity.interfaces.rest.dto.AuthResponse;
+import com.example.identity.interfaces.rest.dto.CompleteInvitationRequest;
 import com.example.identity.interfaces.rest.dto.CurrentUserResponse;
 import com.example.identity.interfaces.rest.dto.ForgotPasswordRequest;
 import com.example.identity.interfaces.rest.dto.LoginRequest;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final LoginUseCase loginUseCase;
+    private final CompleteInvitationUseCase completeInvitationUseCase;
     private final RegisterUseCase registerUseCase;
     private final GetCurrentUserUseCase getCurrentUserUseCase;
     private final ForgotPasswordUseCase forgotPasswordUseCase;
@@ -44,12 +47,14 @@ public class AuthController {
 
     public AuthController(
             LoginUseCase loginUseCase,
+            CompleteInvitationUseCase completeInvitationUseCase,
             RegisterUseCase registerUseCase,
             GetCurrentUserUseCase getCurrentUserUseCase,
             ForgotPasswordUseCase forgotPasswordUseCase,
             ResetPasswordUseCase resetPasswordUseCase,
             AuthRestMapper mapper) {
         this.loginUseCase = loginUseCase;
+        this.completeInvitationUseCase = completeInvitationUseCase;
         this.registerUseCase = registerUseCase;
         this.getCurrentUserUseCase = getCurrentUserUseCase;
         this.forgotPasswordUseCase = forgotPasswordUseCase;
@@ -67,6 +72,19 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         AuthResult result = loginUseCase.execute(mapper.toCommand(request));
+        return mapper.toResponse(result);
+    }
+
+    /**
+     * Completes invitation registration and returns JWT.
+     *
+     * @param request completion data
+     * @return auth response
+     */
+    @Operation(summary = "Complete invitation")
+    @PostMapping("/complete-invitation")
+    public AuthResponse completeInvitation(@Valid @RequestBody CompleteInvitationRequest request) {
+        AuthResult result = completeInvitationUseCase.execute(mapper.toCommand(request));
         return mapper.toResponse(result);
     }
 

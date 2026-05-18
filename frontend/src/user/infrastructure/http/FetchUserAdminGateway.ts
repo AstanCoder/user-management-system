@@ -37,6 +37,15 @@ export class FetchUserAdminGateway implements UserAdminGateway {
     return (await response.json()) as UserDto;
   }
 
+  async resendInvitation(id: string): Promise<void> {
+    const response = await apiFetch(this.baseUrl, `/api/users/${id}/resend-invitation`, {
+      method: 'POST',
+    });
+    if (!response.ok && response.status !== 204) {
+      throw new Error(await parseApiError(response));
+    }
+  }
+
   async update(id: string, payload: UpdateUserPayload): Promise<UserDto> {
     const response = await apiFetch(this.baseUrl, `/api/users/${id}`, {
       method: 'PUT',

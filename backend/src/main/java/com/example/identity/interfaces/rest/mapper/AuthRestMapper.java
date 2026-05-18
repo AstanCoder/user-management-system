@@ -1,10 +1,12 @@
 package com.example.identity.interfaces.rest.mapper;
 
 import com.example.identity.application.command.AuthResult;
+import com.example.identity.application.command.CompleteInvitationCommand;
 import com.example.identity.application.command.CurrentUserResult;
 import com.example.identity.application.command.LoginCommand;
 import com.example.identity.application.command.RegisterCommand;
 import com.example.identity.interfaces.rest.dto.AuthResponse;
+import com.example.identity.interfaces.rest.dto.CompleteInvitationRequest;
 import com.example.identity.interfaces.rest.dto.CurrentUserResponse;
 import com.example.identity.interfaces.rest.dto.LoginRequest;
 import com.example.identity.interfaces.rest.dto.RegisterRequest;
@@ -32,6 +34,14 @@ public interface AuthRestMapper {
      * @return register command
      */
     RegisterCommand toCommand(RegisterRequest request);
+
+    /**
+     * Maps complete invitation request to command.
+     *
+     * @param request complete invitation request
+     * @return command
+     */
+    CompleteInvitationCommand toCommand(CompleteInvitationRequest request);
 
     /**
      * Maps auth result to response.

@@ -1,3 +1,4 @@
+import { CompleteInvitationService } from '../../application/service/CompleteInvitationService';
 import { LoginService } from '../../application/service/LoginService';
 import { RegisterService } from '../../application/service/RegisterService';
 import { FetchAuthGateway } from '../http/FetchAuthGateway';
@@ -8,5 +9,6 @@ const authGateway = new FetchAuthGateway(baseUrl);
 export const identityDependencies = {
   loginUseCase: new LoginService(authGateway),
   registerUseCase: new RegisterService(authGateway),
+  completeInvitationUseCase: new CompleteInvitationService(authGateway),
   authGateway,
 };

@@ -44,11 +44,12 @@ export default function AdminUsersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const { users, stats, loading, error, totalElements, totalPages, updateUser, deleteUser } = useUserAdmin({
+  const { users, stats, loading, error, totalElements, totalPages, updateUser, deleteUser, resendInvitation } =
+    useUserAdmin({
     search,
     page,
     size: PAGE_SIZE,
-  });
+    });
 
   if (user && user.role !== 'ADMIN') {
     router.replace('/contacts');
@@ -85,6 +86,19 @@ export default function AdminUsersPage() {
       await deleteUser(target.id);
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Failed to delete user');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleResendInvitation = async (target: UserDto) => {
+    if (target.status !== 'INVITED') return;
+    setBusyId(target.id);
+    setActionError(null);
+    try {
+      await resendInvitation(target.id);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Failed to resend invitation');
     } finally {
       setBusyId(null);
     }
@@ -193,6 +207,15 @@ export default function AdminUsersPage() {
                             onClick: () => void handleRoleChange(u, role),
                             disabled: disabled || u.role === role,
                           })),
+                          ...(u.status === 'INVITED'
+                            ? [
+                                {
+                                  label: 'Resend invitation',
+                                  onClick: () => void handleResendInvitation(u),
+                                  disabled,
+                                },
+                              ]
+                            : []),
                           {
                             label: 'Delete',
                             onClick: () => void handleDelete(u),

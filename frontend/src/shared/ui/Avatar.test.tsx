@@ -7,4 +7,9 @@ describe('Avatar', () => {
     render(<Avatar name="Sarah Jenkins" />);
     expect(screen.getByText('SJ')).toBeInTheDocument();
   });
+
+  it('renders fallback initials for missing name', () => {
+    render(<Avatar />);
+    expect(screen.getByText('?')).toBeInTheDocument();
+  });
 });

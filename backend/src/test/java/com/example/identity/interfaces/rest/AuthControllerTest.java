@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.identity.application.command.AuthResult;
 import com.example.identity.application.command.CurrentUserResult;
+import com.example.identity.application.port.in.CompleteInvitationUseCase;
 import com.example.identity.application.port.in.ForgotPasswordUseCase;
 import com.example.identity.application.port.in.GetCurrentUserUseCase;
 import com.example.identity.application.port.in.LoginUseCase;
@@ -16,6 +17,7 @@ import com.example.identity.application.port.in.RegisterUseCase;
 import com.example.identity.application.port.in.ResetPasswordUseCase;
 import com.example.identity.config.AuthTestSecurityConfig;
 import com.example.identity.domain.exception.InvalidCredentialsException;
+import com.example.identity.domain.exception.InvalidInvitationTokenException;
 import com.example.identity.infrastructure.config.SecurityConfig;
 import com.example.identity.infrastructure.security.AuthenticatedUserPrincipal;
 import com.example.identity.infrastructure.security.JwtAuthenticationFilter;
@@ -60,6 +62,9 @@ class AuthControllerTest {
     private RegisterUseCase registerUseCase;
 
     @MockBean
+    private CompleteInvitationUseCase completeInvitationUseCase;
+
+    @MockBean
     private GetCurrentUserUseCase getCurrentUserUseCase;
 
     @MockBean
@@ -101,6 +106,41 @@ class AuthControllerTest {
                                 "email", "admin@nexuscrm.com",
                                 "password", "wrong"))))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void completeInvitation_validToken_returns200() throws Exception {
+        UserId userId = UserId.of(UUID.randomUUID().toString());
+        when(completeInvitationUseCase.execute(any()))
+                .thenReturn(AuthResult.builder()
+                        .token("invited-jwt")
+                        .userId(userId)
+                        .email("invitee@nexuscrm.com")
+                        .firstName("Invitee")
+                        .lastName("User")
+                        .role(Role.EDITOR)
+                        .build());
+
+        mockMvc.perform(post("/api/auth/complete-invitation")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "token", "invite-token",
+                                "newPassword", "StrongPass123!"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("invited-jwt"))
+                .andExpect(jsonPath("$.email").value("invitee@nexuscrm.com"));
+    }
+
+    @Test
+    void completeInvitation_invalidToken_returns404() throws Exception {
+        when(completeInvitationUseCase.execute(any())).thenThrow(new InvalidInvitationTokenException());
+
+        mockMvc.perform(post("/api/auth/complete-invitation")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "token", "invalid-token",
+                                "newPassword", "StrongPass123!"))))
+                .andExpect(status().isNotFound());
     }
 
     @Test

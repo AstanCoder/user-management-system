@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 const AUTH_COOKIE_NAME = 'nexus_auth';
 
-const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/accept-invitation'];
 const protectedPrefixes = ['/contacts', '/admin'];
 
 export function middleware(request: NextRequest) {

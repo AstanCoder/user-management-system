@@ -3,14 +3,17 @@ package com.example.identity.infrastructure.config;
 import com.example.identity.application.port.in.ForgotPasswordUseCase;
 import com.example.identity.application.port.in.GetCurrentUserUseCase;
 import com.example.identity.application.port.in.LoginUseCase;
+import com.example.identity.application.port.in.CompleteInvitationUseCase;
 import com.example.identity.application.port.in.RegisterUseCase;
 import com.example.identity.application.port.in.ResetPasswordUseCase;
+import com.example.identity.application.service.CompleteInvitationService;
 import com.example.identity.application.service.ForgotPasswordService;
 import com.example.identity.application.service.GetCurrentUserService;
 import com.example.identity.application.service.LoginService;
 import com.example.identity.application.service.RegisterService;
 import com.example.identity.application.service.ResetPasswordService;
 import com.example.identity.domain.port.EmailSender;
+import com.example.identity.domain.port.InvitationTokenRepository;
 import com.example.identity.domain.port.PasswordHasher;
 import com.example.identity.domain.port.PasswordResetTokenRepository;
 import com.example.identity.domain.port.TokenIssuer;
@@ -35,6 +38,16 @@ public class IdentityModuleConfig {
     public RegisterUseCase registerUseCase(
             UserAuthRepository userAuthRepository, PasswordHasher passwordHasher, TokenIssuer tokenIssuer) {
         return new RegisterService(userAuthRepository, passwordHasher, tokenIssuer);
+    }
+
+    @Bean
+    public CompleteInvitationUseCase completeInvitationUseCase(
+            InvitationTokenRepository invitationTokenRepository,
+            UserAuthRepository userAuthRepository,
+            PasswordHasher passwordHasher,
+            TokenIssuer tokenIssuer) {
+        return new CompleteInvitationService(
+                invitationTokenRepository, userAuthRepository, passwordHasher, tokenIssuer);
     }
 
     @Bean

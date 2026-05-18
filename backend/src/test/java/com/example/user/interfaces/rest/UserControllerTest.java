@@ -19,6 +19,7 @@ import com.example.user.application.port.in.DeleteUserUseCase;
 import com.example.user.application.port.in.GetUserStatsUseCase;
 import com.example.user.application.port.in.InviteUserUseCase;
 import com.example.user.application.port.in.ListUsersUseCase;
+import com.example.user.application.port.in.ResendInvitationUseCase;
 import com.example.user.application.port.in.UpdateUserUseCase;
 import com.example.user.domain.model.Role;
 import com.example.user.domain.model.UserId;
@@ -66,6 +67,9 @@ class UserControllerTest {
 
     @MockBean
     private InviteUserUseCase inviteUserUseCase;
+
+    @MockBean
+    private ResendInvitationUseCase resendInvitationUseCase;
 
     @Test
     void stats_withoutAuth_returns401() throws Exception {
@@ -139,5 +143,12 @@ class UserControllerTest {
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.email").value("invitee@nexuscrm.com"))
                 .andExpect(jsonPath("$.status").value("INVITED"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void resendInvitation_asAdmin_returns204() throws Exception {
+        mockMvc.perform(post("/api/users/11111111-1111-1111-1111-111111111111/resend-invitation"))
+                .andExpect(status().isNoContent());
     }
 }

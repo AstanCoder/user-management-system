@@ -1,5 +1,6 @@
 package com.example.user.infrastructure.config;
 
+import com.example.identity.domain.port.InvitationTokenRepository;
 import com.example.identity.domain.port.PasswordHasher;
 import com.example.user.application.mapper.UserApplicationMapper;
 import com.example.user.application.port.in.CreateUserUseCase;
@@ -7,12 +8,14 @@ import com.example.user.application.port.in.DeleteUserUseCase;
 import com.example.user.application.port.in.GetUserStatsUseCase;
 import com.example.user.application.port.in.InviteUserUseCase;
 import com.example.user.application.port.in.ListUsersUseCase;
+import com.example.user.application.port.in.ResendInvitationUseCase;
 import com.example.user.application.port.in.UpdateUserUseCase;
 import com.example.user.application.service.CreateUserService;
 import com.example.user.application.service.DeleteUserService;
 import com.example.user.application.service.GetUserStatsService;
 import com.example.user.application.service.InviteUserService;
 import com.example.user.application.service.ListUsersService;
+import com.example.user.application.service.ResendInvitationService;
 import com.example.user.application.service.UpdateUserService;
 import com.example.user.domain.port.UserInvitationEmailSender;
 import com.example.user.domain.port.UserRepository;
@@ -58,8 +61,18 @@ public class UserModuleConfig {
     @Bean
     public InviteUserUseCase inviteUserUseCase(
             UserRepository userRepository,
+            InvitationTokenRepository invitationTokenRepository,
             UserInvitationEmailSender invitationEmailSender,
             UserApplicationMapper userApplicationMapper) {
-        return new InviteUserService(userRepository, invitationEmailSender, userApplicationMapper);
+        return new InviteUserService(
+                userRepository, invitationTokenRepository, invitationEmailSender, userApplicationMapper);
+    }
+
+    @Bean
+    public ResendInvitationUseCase resendInvitationUseCase(
+            UserRepository userRepository,
+            InvitationTokenRepository invitationTokenRepository,
+            UserInvitationEmailSender invitationEmailSender) {
+        return new ResendInvitationService(userRepository, invitationTokenRepository, invitationEmailSender);
     }
 }

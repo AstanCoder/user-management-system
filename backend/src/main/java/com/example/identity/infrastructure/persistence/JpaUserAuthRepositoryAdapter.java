@@ -49,6 +49,9 @@ public class JpaUserAuthRepositoryAdapter implements UserAuthRepository {
                 .findById(id.value())
                 .orElseThrow(() -> new IllegalStateException("User not found for password update"));
         entity.setPasswordHash(passwordHash);
+        if (UserStatus.INVITED.name().equals(entity.getStatus())) {
+            entity.setStatus(UserStatus.ACTIVE.name());
+        }
         entity.setUpdatedAt(java.time.Instant.now());
         springDataUserRepository.save(entity);
     }

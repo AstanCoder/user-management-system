@@ -55,6 +55,7 @@ export interface UserAdminGateway {
   list(params: UserListParams): Promise<UserPageDto>;
   stats(): Promise<UserStatsDto>;
   invite(payload: InviteUserPayload): Promise<UserDto>;
+  resendInvitation(id: string): Promise<void>;
   update(id: string, payload: UpdateUserPayload): Promise<UserDto>;
   delete(id: string): Promise<void>;
 }

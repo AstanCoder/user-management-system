@@ -24,6 +24,7 @@ export interface AuthSession {
 export interface AuthGateway {
   login(command: LoginCommand): Promise<AuthSession>;
   register(command: RegisterCommand): Promise<AuthSession>;
+  completeInvitation(token: string, newPassword: string): Promise<AuthSession>;
   getCurrentUser(): Promise<AuthSession>;
   forgotPassword(email: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;

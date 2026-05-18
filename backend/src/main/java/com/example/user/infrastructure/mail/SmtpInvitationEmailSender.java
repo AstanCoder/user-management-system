@@ -13,19 +13,24 @@ public class SmtpInvitationEmailSender implements UserInvitationEmailSender {
 
     private final EmailSender emailSender;
     private final String mailFrom;
+    private final String frontendBaseUrl;
 
     public SmtpInvitationEmailSender(
-            EmailSender emailSender, @Value("${app.mail.from:noreply@nexuscrm.com}") String mailFrom) {
+            EmailSender emailSender,
+            @Value("${app.mail.from:noreply@nexuscrm.com}") String mailFrom,
+            @Value("${app.frontend.base-url:http://localhost:3000}") String frontendBaseUrl) {
         this.emailSender = emailSender;
         this.mailFrom = mailFrom;
+        this.frontendBaseUrl = frontendBaseUrl;
     }
 
     @Override
     public void sendInvitation(String toEmail, String firstName, String inviteToken) {
+        String inviteLink = frontendBaseUrl + "/accept-invitation?token=" + inviteToken;
         String subject = "You are invited to Nexus CRM";
         String body = "Hello " + firstName + ",\n\n"
                 + "You have been invited to join Nexus CRM.\n"
-                + "Use this token to complete registration: " + inviteToken + "\n\n"
+                + "Complete your registration using this link: " + inviteLink + "\n\n"
                 + "— Nexus CRM Team";
         emailSender.send(mailFrom, toEmail, subject, body);
     }

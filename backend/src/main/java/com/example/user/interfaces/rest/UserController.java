@@ -9,6 +9,7 @@ import com.example.user.application.port.in.DeleteUserUseCase;
 import com.example.user.application.port.in.GetUserStatsUseCase;
 import com.example.user.application.port.in.InviteUserUseCase;
 import com.example.user.application.port.in.ListUsersUseCase;
+import com.example.user.application.port.in.ResendInvitationUseCase;
 import com.example.user.application.port.in.UpdateUserUseCase;
 import com.example.user.domain.model.UserId;
 import com.example.user.interfaces.rest.dto.CreateUserRequest;
@@ -51,6 +52,7 @@ public class UserController {
     private final UpdateUserUseCase updateUserUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
     private final InviteUserUseCase inviteUserUseCase;
+    private final ResendInvitationUseCase resendInvitationUseCase;
     private final UserRestMapper mapper;
 
     public UserController(
@@ -60,6 +62,7 @@ public class UserController {
             UpdateUserUseCase updateUserUseCase,
             DeleteUserUseCase deleteUserUseCase,
             InviteUserUseCase inviteUserUseCase,
+            ResendInvitationUseCase resendInvitationUseCase,
             UserRestMapper mapper) {
         this.listUsersUseCase = listUsersUseCase;
         this.getUserStatsUseCase = getUserStatsUseCase;
@@ -67,6 +70,7 @@ public class UserController {
         this.updateUserUseCase = updateUserUseCase;
         this.deleteUserUseCase = deleteUserUseCase;
         this.inviteUserUseCase = inviteUserUseCase;
+        this.resendInvitationUseCase = resendInvitationUseCase;
         this.mapper = mapper;
     }
 
@@ -121,6 +125,19 @@ public class UserController {
     public ResponseEntity<UserResponse> invite(@Valid @RequestBody InviteUserRequest request) {
         UserResult result = inviteUserUseCase.execute(mapper.toCommand(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(result));
+    }
+
+    /**
+     * Resends invitation for a user still in INVITED status.
+     *
+     * @param id user id
+     * @return no content
+     */
+    @Operation(summary = "Resend invitation")
+    @PostMapping("/{id}/resend-invitation")
+    public ResponseEntity<Void> resendInvitation(@PathVariable String id) {
+        resendInvitationUseCase.execute(UserId.of(id));
+        return ResponseEntity.noContent().build();
     }
 
     /**

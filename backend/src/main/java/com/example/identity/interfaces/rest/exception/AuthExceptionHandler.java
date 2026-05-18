@@ -3,6 +3,7 @@ package com.example.identity.interfaces.rest.exception;
 import com.example.contact.interfaces.rest.dto.ErrorResponse;
 import com.example.identity.domain.exception.AuthUserNotFoundException;
 import com.example.identity.domain.exception.InvalidCredentialsException;
+import com.example.identity.domain.exception.InvalidInvitationTokenException;
 import com.example.identity.domain.exception.InvalidPasswordResetTokenException;
 import com.example.identity.domain.exception.UserAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +30,11 @@ public class AuthExceptionHandler {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
-    @ExceptionHandler({AuthUserNotFoundException.class, InvalidPasswordResetTokenException.class})
+    @ExceptionHandler({
+            AuthUserNotFoundException.class,
+            InvalidPasswordResetTokenException.class,
+            InvalidInvitationTokenException.class
+    })
     public ResponseEntity<ErrorResponse> notFound(RuntimeException ex, HttpServletRequest request) {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
