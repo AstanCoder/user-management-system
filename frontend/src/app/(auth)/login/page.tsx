@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { ContactRound } from 'lucide-react';
+import { SiteBrand } from '@/shared/ui/SiteBrand';
 import { Button } from '@/shared/ui/Button';
 import { Input } from '@/shared/ui/Input';
 import { identityDependencies } from '@/identity/infrastructure/config/identityDependencies';
@@ -40,10 +40,9 @@ export default function LoginPage() {
 
   return (
     <main className="w-full max-w-md rounded-xl border border-outline-variant bg-surface-container-lowest p-8 shadow-sm">
-      <div className="mb-6 text-center">
-        <ContactRound className="mx-auto h-10 w-10 text-primary" />
-        <h1 className="mt-2 text-xl font-semibold text-primary">Nexus CRM</h1>
-        <p className="text-sm text-on-surface-variant">Secure access to your contact portal</p>
+      <div className="mb-6">
+        <SiteBrand variant="stacked" logoSize={40} className="mb-2" />
+        <p className="text-center text-sm text-on-surface-variant">Secure access to your contact portal</p>
       </div>
       <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="flex flex-col gap-4">
         <Input label="Email" type="email" {...register('email', { required: true })} required />

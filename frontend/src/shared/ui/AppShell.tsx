@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
 import { ContactRound, Shield } from 'lucide-react';
+import { SiteBrand } from './SiteBrand';
 import { clearStoredAuth, StoredAuth } from '@/shared/lib/authStorage';
 import { Avatar } from './Avatar';
 import { PageFooter } from './PageFooter';
@@ -100,10 +101,7 @@ export function AppShell({ user, children }: AppShellProps) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-outline-variant bg-surface px-4 py-3 lg:px-10">
-          <div className="flex items-center gap-2">
-            <ContactRound className="h-5 w-5 text-primary" />
-            <span className="text-lg font-semibold text-primary">Nexus CRM</span>
-          </div>
+          <SiteBrand logoSize={28} />
           <div className="flex items-center gap-3 lg:hidden">
             <Avatar name={fullName} size="sm" />
           </div>
