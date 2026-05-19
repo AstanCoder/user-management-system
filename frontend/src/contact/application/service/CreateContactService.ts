@@ -1,3 +1,4 @@
+import { BaseMutationService } from '@/shared/application/service/BaseMutationService';
 import { Email } from '../../domain/valueobject/Email';
 import { PhoneNumber } from '../../domain/valueobject/PhoneNumber';
 import { ContactGateway } from '../../domain/port/ContactGateway';
@@ -6,16 +7,15 @@ import { ContactViewModel } from '../command/ContactViewModel';
 import { ContactViewModelMapper } from '../mapper/ContactViewModelMapper';
 import { CreateContactUseCase } from '../port/in/CreateContactUseCase';
 
-/**
- * Creates a contact through the gateway after client-side validation.
- */
-export class CreateContactService implements CreateContactUseCase {
-  constructor(private readonly gateway: ContactGateway) {}
+export class CreateContactService
+  extends BaseMutationService<CreateContactCommand, ContactViewModel>
+  implements CreateContactUseCase
+{
+  constructor(private readonly gateway: ContactGateway) {
+    super();
+  }
 
-  /**
-   * @inheritdoc
-   */
-  async execute(command: CreateContactCommand): Promise<ContactViewModel> {
+  protected async handleMutation(command: CreateContactCommand): Promise<ContactViewModel> {
     Email.create(command.email);
     PhoneNumber.createOptional(command.phone);
     const contact = await this.gateway.create(command);

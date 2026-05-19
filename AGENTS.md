@@ -34,6 +34,15 @@ cp .env.example .env
 docker compose -f docker/docker-compose.yml up --build
 ```
 
+Optional demo data population (only when explicitly requested):
+
+```bash
+docker compose -f docker/docker-compose.yml --profile seed up --build
+```
+
+`backend-seed` runs once, inserts realistic demo records (1200 contacts by default), and exits.  
+Customize volume with `APP_SEED_TARGET_CONTACTS` and `APP_SEED_TARGET_USERS`.
+
 Wait until backend responds on port 8080 and frontend on 3000.
 
 | Check | Command / URL |

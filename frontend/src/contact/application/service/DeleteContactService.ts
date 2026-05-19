@@ -1,17 +1,14 @@
+import { BaseMutationService } from '@/shared/application/service/BaseMutationService';
 import { ContactId } from '../../domain/valueobject/ContactId';
 import { ContactGateway } from '../../domain/port/ContactGateway';
 import { DeleteContactUseCase } from '../port/in/DeleteContactUseCase';
 
-/**
- * Deletes a contact through the gateway.
- */
-export class DeleteContactService implements DeleteContactUseCase {
-  constructor(private readonly gateway: ContactGateway) {}
+export class DeleteContactService extends BaseMutationService<ContactId, void> implements DeleteContactUseCase {
+  constructor(private readonly gateway: ContactGateway) {
+    super();
+  }
 
-  /**
-   * @inheritdoc
-   */
-  async execute(id: ContactId): Promise<void> {
+  protected async handleMutation(id: ContactId): Promise<void> {
     await this.gateway.delete(id);
   }
 }

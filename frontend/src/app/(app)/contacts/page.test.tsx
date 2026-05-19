@@ -1,12 +1,16 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockUseContactDirectory } = vi.hoisted(() => ({
+const { mockUseContactDirectory, mockSearchParams, mockRouterReplace } = vi.hoisted(() => ({
   mockUseContactDirectory: vi.fn(),
+  mockSearchParams: new URLSearchParams(),
+  mockRouterReplace: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: mockRouterReplace }),
+  usePathname: () => '/contacts',
+  useSearchParams: () => mockSearchParams,
 }));
 
 vi.mock('@/identity/interfaces/hooks/useAuth', () => ({
@@ -37,6 +41,7 @@ describe('ContactsDirectoryPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchParams.delete('page');
     mockUseContactDirectory.mockReturnValue({
       items: [],
       loading: false,
@@ -79,6 +84,16 @@ describe('ContactsDirectoryPage', () => {
       expect(lastCall.email).toBe('albert@outlook.com');
       expect(lastCall.phone).toBe('786');
       expect(lastCall.tagNames).toEqual(['typescript', 'sales']);
+    });
+  });
+
+  it('reads page from url query params', async () => {
+    mockSearchParams.set('page', '2');
+    render(<ContactsDirectoryPage />);
+
+    await waitFor(() => {
+      const lastCall = mockUseContactDirectory.mock.calls.at(-1)?.[0] as { page?: number };
+      expect(lastCall.page).toBe(2);
     });
   });
 });

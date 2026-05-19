@@ -48,6 +48,12 @@ export function useContactDirectory(options: UseContactDirectoryOptions = {}): U
     return () => clearTimeout(timer);
   }, [normalizedSearch]);
 
+  useEffect(() => {
+    if (typeof options.page === 'number') {
+      setPage(options.page);
+    }
+  }, [options.page]);
+
   const directoryQuery = useQuery({
     queryKey: contactQueryKeys.directory(
       debouncedSearch,

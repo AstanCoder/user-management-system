@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { Mail, Building2, Plus, Search, Filter } from 'lucide-react';
 import { useContactDirectory } from '@/contact/interfaces/hooks/useContactDirectory';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
@@ -17,9 +17,11 @@ const PAGE_SIZE = 20;
 
 export default function ContactsDirectoryPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
+  const page = parsePageParam(searchParams.get('page'));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [emailFilter, setEmailFilter] = useState('');
   const [phoneFilter, setPhoneFilter] = useState('');
@@ -37,6 +39,23 @@ export default function ContactsDirectoryPage() {
   });
 
   const canEdit = user?.role === 'ADMIN' || user?.role === 'EDITOR';
+
+  const setPage = useCallback((nextPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextPage <= 0) {
+      params.delete('page');
+    } else {
+      params.set('page', String(nextPage));
+    }
+    const queryString = params.toString();
+    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    const currentQueryString = searchParams.toString();
+    const currentUrl = currentQueryString ? `${pathname}?${currentQueryString}` : pathname;
+    if (nextUrl === currentUrl) {
+      return;
+    }
+    router.replace(nextUrl, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   async function handleDelete(contact: ContactViewModel) {
     if (!confirm(`Delete "${contact.fullName}"? This cannot be undone.`)) return;
@@ -265,4 +284,13 @@ function ContactCard({ contact, canEdit, onView, onEdit, onDelete }: ContactCard
       )}
     </div>
   );
+}
+
+function parsePageParam(page: string | null): number {
+  if (!page) return 0;
+  const parsed = Number.parseInt(page, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0;
+  }
+  return parsed;
 }

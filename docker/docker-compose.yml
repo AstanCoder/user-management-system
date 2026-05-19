@@ -101,6 +101,27 @@ services:
       imgproxy:
         condition: service_started
 
+  backend-seed:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    profiles: ["seed"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-contacts}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-contacts}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-contacts}
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      APP_SEED_ENABLED: "true"
+      APP_SEED_TARGET_CONTACTS: ${APP_SEED_TARGET_CONTACTS:-1200}
+      APP_SEED_TARGET_USERS: ${APP_SEED_TARGET_USERS:-24}
+    command:
+      - --spring.profiles.active=seed
+      - --app.seed.exit-after-run=true
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   frontend:
     build:
       context: ..

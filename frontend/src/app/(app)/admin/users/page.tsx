@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, UserPlus, Users, Shield, PenLine } from 'lucide-react';
 import { useAuth } from '@/identity/interfaces/hooks/useAuth';
 import { useUserAdmin } from '@/user/interfaces/hooks/useUserAdmin';
@@ -39,8 +39,10 @@ function statusLabel(status: UserDto['status']): string {
 export default function AdminUsersPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
+  const page = parsePageParam(searchParams.get('page'));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -51,10 +53,30 @@ export default function AdminUsersPage() {
     size: PAGE_SIZE,
     });
 
-  if (user && user.role !== 'ADMIN') {
-    router.replace('/contacts');
-    return null;
-  }
+  const setPage = useCallback((nextPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextPage <= 0) {
+      params.delete('page');
+    } else {
+      params.set('page', String(nextPage));
+    }
+    const queryString = params.toString();
+    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    const currentQueryString = searchParams.toString();
+    const currentUrl = currentQueryString ? `${pathname}?${currentQueryString}` : pathname;
+    if (nextUrl === currentUrl) {
+      return;
+    }
+    router.replace(nextUrl, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (user && user.role !== 'ADMIN') {
+      router.replace('/contacts');
+    }
+  }, [user, router]);
+
+  if (user && user.role !== 'ADMIN') return null;
 
   const handleRoleChange = async (target: UserDto, role: UserRole) => {
     if (target.role === role) return;
@@ -244,4 +266,13 @@ export default function AdminUsersPage() {
       )}
     </div>
   );
+}
+
+function parsePageParam(page: string | null): number {
+  if (!page) return 0;
+  const parsed = Number.parseInt(page, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0;
+  }
+  return parsed;
 }

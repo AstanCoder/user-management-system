@@ -1,11 +1,20 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockUpdateUser, mockDeleteUser, mockResendInvitation, mockRefetch } = vi.hoisted(() => ({
+const {
+  mockUpdateUser,
+  mockDeleteUser,
+  mockResendInvitation,
+  mockRefetch,
+  mockUseUserAdmin,
+  mockSearchParams,
+} = vi.hoisted(() => ({
   mockUpdateUser: vi.fn().mockResolvedValue(undefined),
   mockDeleteUser: vi.fn().mockResolvedValue(undefined),
   mockResendInvitation: vi.fn().mockResolvedValue(undefined),
   mockRefetch: vi.fn().mockResolvedValue(undefined),
+  mockUseUserAdmin: vi.fn(),
+  mockSearchParams: new URLSearchParams(),
 }));
 
 const mockUsers = [
@@ -31,6 +40,8 @@ const mockUsers = [
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn() }),
+  usePathname: () => '/admin/users',
+  useSearchParams: () => mockSearchParams,
 }));
 
 vi.mock('@/identity/interfaces/hooks/useAuth', () => ({
@@ -49,7 +60,20 @@ vi.mock('@/identity/interfaces/hooks/useAuth', () => ({
 }));
 
 vi.mock('@/user/interfaces/hooks/useUserAdmin', () => ({
-  useUserAdmin: () => ({
+  useUserAdmin: (options: unknown) => mockUseUserAdmin(options),
+}));
+
+import AdminUsersPage from './page';
+
+describe('AdminUsersPage', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSearchParams.delete('page');
+    mockUseUserAdmin.mockReturnValue({
     users: mockUsers,
     stats: {
       totalUsers: 2,
@@ -72,18 +96,7 @@ vi.mock('@/user/interfaces/hooks/useUserAdmin', () => ({
     updateUser: mockUpdateUser,
     deleteUser: mockDeleteUser,
     resendInvitation: mockResendInvitation,
-  }),
-}));
-
-import AdminUsersPage from './page';
-
-describe('AdminUsersPage', () => {
-  afterEach(() => {
-    cleanup();
-  });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
+    });
     vi.stubGlobal('confirm', vi.fn(() => true));
   });
 
@@ -130,6 +143,16 @@ describe('AdminUsersPage', () => {
     fireEvent.click(screen.getByText('Resend invitation'));
     await waitFor(() => {
       expect(mockResendInvitation).toHaveBeenCalledWith('2');
+    });
+  });
+
+  it('reads page from url query params', async () => {
+    mockSearchParams.set('page', '3');
+    render(<AdminUsersPage />);
+
+    await waitFor(() => {
+      const lastCall = mockUseUserAdmin.mock.calls.at(-1)?.[0] as { page?: number };
+      expect(lastCall.page).toBe(3);
     });
   });
 });

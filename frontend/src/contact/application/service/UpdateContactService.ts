@@ -1,3 +1,4 @@
+import { BaseMutationService } from '@/shared/application/service/BaseMutationService';
 import { Email } from '../../domain/valueobject/Email';
 import { PhoneNumber } from '../../domain/valueobject/PhoneNumber';
 import { ContactGateway } from '../../domain/port/ContactGateway';
@@ -6,16 +7,15 @@ import { ContactViewModelMapper } from '../mapper/ContactViewModelMapper';
 import { UpdateContactCommand } from '../command/UpdateContactCommand';
 import { UpdateContactUseCase } from '../port/in/UpdateContactUseCase';
 
-/**
- * Updates a contact through the gateway after client-side validation.
- */
-export class UpdateContactService implements UpdateContactUseCase {
-  constructor(private readonly gateway: ContactGateway) {}
+export class UpdateContactService
+  extends BaseMutationService<UpdateContactCommand, ContactViewModel>
+  implements UpdateContactUseCase
+{
+  constructor(private readonly gateway: ContactGateway) {
+    super();
+  }
 
-  /**
-   * @inheritdoc
-   */
-  async execute(command: UpdateContactCommand): Promise<ContactViewModel> {
+  protected async handleMutation(command: UpdateContactCommand): Promise<ContactViewModel> {
     Email.create(command.email);
     PhoneNumber.createOptional(command.phone);
     const contact = await this.gateway.update(command);

@@ -29,6 +29,19 @@ cp .env.example .env
 docker compose -f docker/docker-compose.yml up --build
 ```
 
+To populate realistic demo data (1200+ contacts and related entities), run:
+
+```bash
+docker compose -f docker/docker-compose.yml --profile seed up --build
+```
+
+Optional overrides:
+
+```bash
+APP_SEED_TARGET_CONTACTS=1800 APP_SEED_TARGET_USERS=40 \
+docker compose -f docker/docker-compose.yml --profile seed up --build
+```
+
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:3000/login |
@@ -248,3 +261,4 @@ Copy `.env.example` to `.env`. Important variables:
 - `NEXT_PUBLIC_API_URL` — browser-facing API origin (e.g. `http://localhost:8080`)
 - `APP_CORS_ALLOWED_ORIGINS` — must include the frontend origin
 - `SPRING_DATASOURCE_*` — Postgres connection for the backend
+- `APP_SEED_TARGET_CONTACTS` / `APP_SEED_TARGET_USERS` — demo dataset size when running with `--profile seed`

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { userDependencies } from '../../infrastructure/config/userDependencies';
 import { InviteUserPayload, UpdateUserPayload } from '../../domain/port/UserAdminGateway';
+import { UpdateUserCommand } from '../../application/command/UpdateUserCommand';
 import { userQueryKeys } from '../query/userQueryKeys';
 
 export interface UseUserAdminOptions {
@@ -25,10 +26,16 @@ export function useUserAdmin(options: UseUserAdminOptions = {}) {
     return () => clearTimeout(timer);
   }, [normalizedSearch]);
 
+  useEffect(() => {
+    if (typeof options.page === 'number') {
+      setPage(options.page);
+    }
+  }, [options.page]);
+
   const usersQuery = useQuery({
     queryKey: userQueryKeys.list(debouncedSearch, page, size),
     queryFn: async () =>
-      userDependencies.userAdminGateway.list({
+      userDependencies.listUsersUseCase.execute({
         page,
         size,
         search: debouncedSearch || undefined,
@@ -37,7 +44,7 @@ export function useUserAdmin(options: UseUserAdminOptions = {}) {
 
   const statsQuery = useQuery({
     queryKey: userQueryKeys.stats,
-    queryFn: async () => userDependencies.userAdminGateway.stats(),
+    queryFn: async () => userDependencies.getUserStatsUseCase.execute(),
   });
 
   const invalidateUsers = async () => {
@@ -45,23 +52,22 @@ export function useUserAdmin(options: UseUserAdminOptions = {}) {
   };
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
-      userDependencies.userAdminGateway.update(id, payload),
+    mutationFn: async (command: UpdateUserCommand) => userDependencies.updateUserUseCase.execute(command),
     onSuccess: invalidateUsers,
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: async (id: string) => userDependencies.userAdminGateway.delete(id),
+    mutationFn: async (id: string) => userDependencies.deleteUserUseCase.execute(id),
     onSuccess: invalidateUsers,
   });
 
   const inviteUserMutation = useMutation({
-    mutationFn: async (payload: InviteUserPayload) => userDependencies.userAdminGateway.invite(payload),
+    mutationFn: async (payload: InviteUserPayload) => userDependencies.inviteUserUseCase.execute(payload),
     onSuccess: invalidateUsers,
   });
 
   const resendInvitationMutation = useMutation({
-    mutationFn: async (id: string) => userDependencies.userAdminGateway.resendInvitation(id),
+    mutationFn: async (id: string) => userDependencies.resendInvitationUseCase.execute(id),
     onSuccess: invalidateUsers,
   });
 
