@@ -9,10 +9,9 @@ Contact and user management CRM built with **hexagonal architecture (DDD)** on t
 | Data | PostgreSQL 16 |
 | Local ops | Docker Compose (Postgres, Mailhog, backend, frontend) |
 
-Architecture rules and layer layout: [Aarch.md](./Aarch.md)  
-Application flows (auth, contacts, admin): [docs/flows/application-flows.md](./docs/flows/application-flows.md)  
-Guide for automated agents: [AGENTS.md](./AGENTS.md)  
-UI reference (Stitch exports): [docs/design/stitch/README.md](./docs/design/stitch/README.md)
+Architecture rules and layer layout: [docs/Aarch.md](./docs/Aarch.md)  
+UI and design system reference: [docs/DESIGN.md](./docs/DESIGN.md)  
+Guide for automated agents: [AGENTS.md](./AGENTS.md)
 
 ## Bounded contexts
 
@@ -248,8 +247,10 @@ frontend/src/
   user/
   shared/      # UI kit, apiFetch, authStorage
 docker/        # docker-compose.yml
-docs/          # flows, design assets, architecture diagram
-Aarch.md       # architecture authority
+docs/          # architecture and design reference
+  Aarch.md     # hexagonal architecture authority
+  DESIGN.md    # UI design system (colors, typography, components)
+  architecture/hexagonal-overview.png
 AGENTS.md      # agent runbook
 ```
 

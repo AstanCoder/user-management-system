@@ -18,7 +18,7 @@ Hexagonal architecture with a **pure domain**: no Spring, JPA, React, Next.js, o
 
 ## Overview (hexagon)
 
-![Hexagonal architecture overview](./docs/architecture/hexagonal-overview.png)
+![Hexagonal architecture overview](./architecture/hexagonal-overview.png)
 
 **Driving (inbound):** actors that initiate actions (UI, REST API, cron).  
 **Driven (outbound):** services the app consumes (database, external APIs, queues).

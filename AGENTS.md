@@ -1,10 +1,10 @@
 # Agent runbook — Nexus CRM
 
-Instructions for automated agents that review, run, test, or modify this repository. Human contributors can use the same commands; product context lives in [README.md](./README.md) and [docs/flows/application-flows.md](./docs/flows/application-flows.md).
+Instructions for automated agents that review, run, test, or modify this repository. Human contributors can use the same commands; product context lives in [README.md](./README.md).
 
 ## What this system is
 
-Monorepo CRM: Spring Boot API + Next.js UI + PostgreSQL. Three bounded contexts (`contact`, `identity`, `user`) follow hexagonal architecture. See [Aarch.md](./Aarch.md) for dependency rules.
+Monorepo CRM: Spring Boot API + Next.js UI + PostgreSQL. Three bounded contexts (`contact`, `identity`, `user`) follow hexagonal architecture. See [docs/Aarch.md](./docs/Aarch.md) for dependency rules.
 
 ## Repository map
 
@@ -14,8 +14,9 @@ Monorepo CRM: Spring Boot API + Next.js UI + PostgreSQL. Three bounded contexts 
 | `frontend/` | Next.js App Router UI |
 | `docker/docker-compose.yml` | Full stack: postgres, mailhog, backend, frontend |
 | `.env.example` | Environment template (copy to `.env`) |
-| `docs/flows/` | End-to-end application flows |
-| `docs/design/stitch/` | UI reference screens and HTML (not runtime) |
+| `docs/Aarch.md` | Hexagonal architecture rules and layer boundaries |
+| `docs/DESIGN.md` | UI design system (colors, typography, components) |
+| `docs/architecture/` | Architecture diagrams referenced from `Aarch.md` |
 
 Do not treat `backend/bin/` as source; it is IDE/build output and should not be committed.
 
@@ -196,7 +197,7 @@ Method-level `@PreAuthorize` on controllers is authoritative.
 
 ## Making changes safely
 
-1. Read [Aarch.md](./Aarch.md) before moving code across layers.
+1. Read [docs/Aarch.md](./docs/Aarch.md) before moving code across layers.
 2. Backend: domain must stay free of Spring/JPA imports.
 3. Frontend: keep HTTP in `infrastructure`, UI in `interfaces`, orchestration in `application`.
 4. After Java changes, run `./gradlew :backend:test`.
@@ -209,6 +210,6 @@ When the backend is running: http://localhost:8080/swagger-ui.html — use for r
 
 ## Related documentation
 
-- [docs/flows/application-flows.md](./docs/flows/application-flows.md) — sequence and route-level flows
-- [docs/README.md](./docs/README.md) — documentation index
-- [docs/design/stitch/README.md](./docs/design/stitch/README.md) — design reference assets
+- [docs/Aarch.md](./docs/Aarch.md) — architecture constraints, layer boundaries, and backend ↔ frontend mapping
+- [docs/DESIGN.md](./docs/DESIGN.md) — design system reference (palette, typography, layout, components)
+- [docs/architecture/hexagonal-overview.png](./docs/architecture/hexagonal-overview.png) — hexagonal architecture diagram
