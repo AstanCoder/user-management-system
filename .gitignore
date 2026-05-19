@@ -16,6 +16,5 @@ openspec/
 **/build/
 **/target/
 **/dist/
-**/out/
 **/buildSrc/
 **/bin/

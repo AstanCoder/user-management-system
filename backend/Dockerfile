@@ -4,7 +4,6 @@ FROM gradle:8.11.1-jdk21-alpine AS build
 WORKDIR /app
 
 COPY settings.gradle.kts build.gradle.kts ./
-COPY buildSrc buildSrc
 COPY backend/build.gradle.kts backend/build.gradle.kts
 
 RUN --mount=type=cache,target=/home/gradle/.gradle \
