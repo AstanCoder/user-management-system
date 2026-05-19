@@ -234,6 +234,10 @@ cd frontend && npm run typecheck && npm run lint && npm test
 
 Hexagonal dependency rules are enforced in `backend/src/test/java/com/example/architecture/HexagonalArchitectureTest.java`.
 
+### CI
+
+On every push and pull request, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs backend tests, frontend typecheck/lint/tests, and a Docker Compose smoke test (stack up, health checks, login + `/api/auth/me`). See [AGENTS.md](./AGENTS.md#continuous-integration) for job details.
+
 ## Project layout
 
 ```

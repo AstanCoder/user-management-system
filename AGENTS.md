@@ -81,6 +81,20 @@ npm run dev
 
 `NEXT_PUBLIC_API_URL` must match the API origin the browser can reach (CORS: `APP_CORS_ALLOWED_ORIGINS`).
 
+## Continuous integration
+
+GitHub Actions workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)
+
+Runs on every `push` and `pull_request` with three parallel jobs:
+
+| Job | What it runs |
+|-----|----------------|
+| `backend-tests` | `./gradlew :backend:test --no-daemon` (JDK 21) |
+| `frontend-quality` | `npm ci`, `typecheck`, `lint`, `test` (Node 20) |
+| `docker-compose-smoke` | `docker compose -f docker/docker-compose.yml up --build -d`, waits for `/api-docs` and `/login`, login + `/api/auth/me`, then `down -v` |
+
+Reproduce CI locally with the commands in **Verification commands** below, plus the Docker smoke checks from **Run full stack**.
+
 ## Verification commands (run before claiming success)
 
 From repository root:
