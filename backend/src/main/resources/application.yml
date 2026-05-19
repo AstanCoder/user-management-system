@@ -50,6 +50,8 @@ app:
         capacity-per-hour: ${APP_SECURITY_RATE_LIMIT_FORGOT_PASSWORD_CAPACITY_PER_HOUR:8}
   mail:
     from: ${APP_MAIL_FROM:noreply@nexuscrm.com}
+  frontend:
+    base-url: ${APP_FRONTEND_BASE_URL:http://localhost:3000}
   avatar:
     provider: ${APP_AVATAR_PROVIDER:minio}
     storage-path: ${APP_AVATAR_STORAGE_PATH:./data/avatars}

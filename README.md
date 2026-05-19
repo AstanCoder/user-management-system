@@ -98,6 +98,8 @@ With Docker Compose, SMTP targets **Mailhog** (`mailhog:1025`). Read messages at
 
 For `./gradlew :backend:bootRun` without Compose, run Mailhog locally (`docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog`) and set `MAIL_HOST=localhost`, `MAIL_PORT=1025` in `.env`, or use Mailtrap credentials (see `.env.example`).
 
+Invitation emails include an accept link built from `APP_FRONTEND_BASE_URL` (default `http://localhost:3000`). Set this to the origin users open in the browser — e.g. `http://localhost:3002` if the frontend runs on a non-default port.
+
 ## Roles
 
 | Role | Contacts | User admin |
@@ -215,7 +217,7 @@ Request bodies for contacts are validated and sanitized (trim names, lowercase e
 - Invite flow:
   - Frontend page: `/admin/users/invite`.
   - API call: `POST /api/users/invite`.
-  - Backend: `UserController.invite()` sends invitation email with tokenized activation link.
+  - Backend: `UserController.invite()` sends invitation email with tokenized activation link (`{APP_FRONTEND_BASE_URL}/accept-invitation?token=...`).
 - Resend flow:
   - Frontend page: `/admin/users` action menu for `INVITED` users.
   - API call: `POST /api/users/{id}/resend-invitation`.
@@ -265,5 +267,7 @@ Copy `.env.example` to `.env`. Important variables:
 - `JWT_SECRET` — at least 32 characters in production
 - `NEXT_PUBLIC_API_URL` — browser-facing API origin (e.g. `http://localhost:8080`)
 - `APP_CORS_ALLOWED_ORIGINS` — must include the frontend origin
+- `APP_FRONTEND_BASE_URL` — public frontend origin for invitation email links (e.g. `http://localhost:3000`; maps to `app.frontend.base-url` in the backend)
+- `APP_MAIL_FROM` — sender address for transactional email (invitations, password reset)
 - `SPRING_DATASOURCE_*` — Postgres connection for the backend
 - `APP_SEED_TARGET_CONTACTS` / `APP_SEED_TARGET_USERS` — demo dataset size when running with `--profile seed`
